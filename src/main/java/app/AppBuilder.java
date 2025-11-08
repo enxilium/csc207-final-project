@@ -1,6 +1,8 @@
 package app;
 
 import data_access.GeminiApiDataAccess;
+import entities.Course;
+import entities.PDFFile;
 import interface_adapters.LoadingViewModel;
 import interface_adapters.ViewManagerModel;
 import interface_adapters.evaluate_test.*;
@@ -14,11 +16,13 @@ import usecases.mock_test_generation.MockTestGenerationInteractor;
 import usecases.lecturenotes.CourseLookupGateway;
 import usecases.lecturenotes.GenerateLectureNotesInteractor;
 
+import views.*;
 import views.ViewManager;
 import views.LectureNotesView;
 
 import javax.swing.*;
 import java.awt.*;
+import java.nio.file.Paths;
 
 public class AppBuilder {
     // --- Shared Components held by the Builder ---

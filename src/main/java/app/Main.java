@@ -12,9 +12,11 @@ public class Main {
                 .addDemoView()
                 .addWriteTestView()
                 .addEvaluateTestView()
+                .addLectureNotesView()
                 .addLoadingView()
                 .addMockTestGenerationUseCase()
                 .addEvaluateTestUseCase()
+                .addLectureNotesUseCase()
                 .build();
 
         application.pack();

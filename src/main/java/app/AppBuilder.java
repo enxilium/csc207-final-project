@@ -7,9 +7,18 @@ import interface_adapters.LoadingViewModel;
 import interface_adapters.ViewManagerModel;
 import interface_adapters.evaluate_test.*;
 import interface_adapters.mock_test.*;
+import interface_adapters.lecturenotes.GenerateLectureNotesController;
+import interface_adapters.lecturenotes.GenerateLectureNotesPresenter;
+import interface_adapters.lecturenotes.LectureNotesViewModel;
+
 import usecases.evaluate_test.EvaluateTestInteractor;
 import usecases.mock_test_generation.MockTestGenerationInteractor;
+import usecases.lecturenotes.CourseLookupGateway;
+import usecases.lecturenotes.GenerateLectureNotesInteractor;
+
 import views.*;
+import views.ViewManager;
+import views.LectureNotesView;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,8 +40,10 @@ public class AppBuilder {
     private MockTestViewModel mockTestViewModel;
     private EvaluateTestViewModel evaluateTestViewModel;
     private LoadingViewModel loadingViewModel;
+    private LectureNotesViewModel lectureNotesViewModel;
     private WriteTestView writeTestView;
     private EvaluateTestView evaluateTestView;
+    private LectureNotesView lectureNotesView;
 
     public AppBuilder() {
     }
@@ -55,6 +66,13 @@ public class AppBuilder {
         loadingViewModel = new LoadingViewModel();
         LoadingView loadingView = new LoadingView(loadingViewModel);
         cardPanel.add(loadingView, loadingViewModel.getViewName());
+        return this;
+    }
+
+    public AppBuilder addLectureNotesView() {
+        lectureNotesViewModel = new LectureNotesViewModel();
+        lectureNotesView = new LectureNotesView(lectureNotesViewModel);
+        cardPanel.add(lectureNotesView, lectureNotesViewModel.getViewName());
         return this;
     }
 
@@ -84,6 +102,28 @@ public class AppBuilder {
 
         // Inject the presenter into the EvaluateTestView
         evaluateTestView.setPresenter(evalPresenter);
+
+        return this;
+    }
+
+    public AppBuilder addLectureNotesUseCase() {
+        // 1. Course gateway (temporary hard-coded implementation for local testing)
+        CourseLookupGateway courseGateway = new HardCodedCourseLookup();
+
+        // 2. Presenter: updates the LectureNotesViewModel and switches the active view
+        GenerateLectureNotesPresenter presenter =
+                new GenerateLectureNotesPresenter(lectureNotesViewModel, viewManagerModel);
+
+        // 3. Interactor: core use case logic (uses courseGateway and geminiDAO)
+        GenerateLectureNotesInteractor interactor =
+                new GenerateLectureNotesInteractor(courseGateway, geminiDAO, presenter);
+
+        // 4. Controller: called by the LectureNotesView
+        GenerateLectureNotesController controller =
+                new GenerateLectureNotesController(interactor);
+
+        // 5. Inject controller into the LectureNotesView
+        lectureNotesView.setController(controller);
 
         return this;
     }

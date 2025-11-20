@@ -5,11 +5,6 @@ import entities.LectureNotes;
 
 /**
  * This interface hides the details of calling the Gemini SDK.
- *
- * The lecture-notes interactor will call this, and the actual
- * implementation (e.g., data_access.GeminiApiDataAccess) will
- * use the Google Gemini Java SDK to generate notes from the
- * uploaded PDF files for a given course and topic.
  */
 public interface NotesGeminiGateway {
 
@@ -18,7 +13,8 @@ public interface NotesGeminiGateway {
      * call Gemini to generate lecture notes, and return them as
      * a LectureNotes entity.
      *
-     * @throws Exception if the Gemini call fails or something goes wrong.
+     * @throws NotesGenerationException if the Gemini call or I/O fails.
      */
-    LectureNotes generateNotes(Course course, String topic) throws Exception;
+    LectureNotes generateNotes(Course course, String topic)
+            throws NotesGenerationException;
 }

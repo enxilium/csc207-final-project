@@ -1,5 +1,6 @@
 package usecases.lecturenotes;
 
+
 import entities.Course;
 import entities.LectureNotes;
 
@@ -39,7 +40,8 @@ public class GenerateLectureNotesInteractor implements GenerateLectureNotesInput
             );
             presenter.prepareSuccessView(outputData);
 
-        } catch (Exception e) {
+        } catch (NotesGenerationException e) {
+            e.printStackTrace();
             presenter.prepareFailView("Failed to generate lecture notes. Please try again.");
         }
     }

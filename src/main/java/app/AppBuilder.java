@@ -10,6 +10,7 @@ import interface_adapters.evaluate_test.*;
 import interface_adapters.mock_test.*;
 import usecases.evaluate_test.EvaluateTestInteractor;
 import usecases.mock_test_generation.MockTestGenerationInteractor;
+
 import views.*;
 
 import javax.swing.*;
@@ -40,6 +41,9 @@ public class AppBuilder {
     private LoadingViewModel loadingViewModel;
     private WriteTestView writeTestView;
     private EvaluateTestView evaluateTestView;
+    // Lecture notes
+    private interface_adapters.lecturenotes.LectureNotesViewModel lectureNotesViewModel;
+    private views.LectureNotesView lectureNotesView;
 
     // === SHIRLEY: Course dashboard/workspace view models & views ===
     private CourseDashboardViewModel courseDashboardViewModel;
@@ -115,6 +119,57 @@ public class AppBuilder {
         return this;
     }
 
+    public AppBuilder addLectureNotesView() {
+        this.lectureNotesViewModel = new interface_adapters.lecturenotes.LectureNotesViewModel();
+        return this;
+    }
+
+    public AppBuilder addLectureNotesUseCase() {
+        // 1) gateway
+        usecases.lecturenotes.CourseLookupGateway courseGateway =
+                new data_access.HardCodedCourseLookup();
+
+        // 2) presenter
+        interface_adapters.lecturenotes.GenerateLectureNotesPresenter presenter =
+                new interface_adapters.lecturenotes.GenerateLectureNotesPresenter(
+                        this.lectureNotesViewModel, this.viewManagerModel);
+
+        // 3) interactor
+        usecases.lecturenotes.GenerateLectureNotesInteractor interactor =
+                new usecases.lecturenotes.GenerateLectureNotesInteractor(
+                        courseGateway,
+                        new data_access.NotesGeminiApiDataAccess(),
+                        presenter
+                );
+
+        // 4) controller
+        interface_adapters.lecturenotes.GenerateLectureNotesController controller =
+                new interface_adapters.lecturenotes.GenerateLectureNotesController(interactor);
+
+        // 5) view (two-arg ctor)
+        if (this.lectureNotesView == null) {
+            this.lectureNotesView =
+                    new views.LectureNotesView(this.lectureNotesViewModel, controller);
+            this.cardPanel.add(this.lectureNotesView,
+                    this.lectureNotesViewModel.getViewName());
+        } else {
+            // if the view already exists (hot rebuild path)
+            this.lectureNotesView.setController(controller);
+        }
+
+        // 6) Back -> CourseWorkspace (fallback to Dashboard)
+        this.lectureNotesView.setBackAction(() -> {
+            if (this.courseWorkspaceView != null) {
+                this.viewManagerModel.setState(this.courseWorkspaceView.getViewName());
+            } else if (this.courseDashboardView != null) {
+                this.viewManagerModel.setState(this.courseDashboardView.getViewName());
+            }
+            this.viewManagerModel.firePropertyChange();
+        });
+
+        return this;
+    }
+
 
     // === SHIRLEY: Course dashboard / workspace methods ===
 
@@ -183,6 +238,21 @@ public class AppBuilder {
 
         this.courseWorkspaceView.setCourseDashboardController(courseDashboardController);
         this.courseWorkspaceView.setCourseWorkspaceController(courseController);
+
+        // Open notes from the workspace; pass the current course id, then navigate.
+        this.courseWorkspaceView.setOpenLectureNotesAction(() -> {
+            // get currently selected course from the workspace VM
+            var wsState = this.courseWorkspaceViewModel.getState();
+            var course = (wsState == null) ? null : wsState.getCourse();
+            String id = (course == null) ? "" : course.getCourseId();
+
+            // hand id to notes view
+            this.lectureNotesView.setCourseId(id);
+
+            // go to notes screen
+            this.viewManagerModel.setState(this.lectureNotesViewModel.getViewName());
+            this.viewManagerModel.firePropertyChange();
+        });
 
         this.courseCreateView.setCourseDashboardController(courseDashboardController);
         this.courseCreateView.setCourseWorkspaceController(courseController);

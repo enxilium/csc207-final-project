@@ -23,15 +23,6 @@ public class LocalCourseRepository implements usecases.ICourseRepository, MockTe
     private final String FILE_NAME = "courses.json";
     public LocalCourseRepository(){
         courses = new ArrayList<>();
-        /*
-        courses.add(new Course("CSC494", "Computer Science Project", "Computer Science Project"));
-        courses.add(new Course("CSC458", "Computer Networking Systems", "Computer Networking Systems"));
-        courses.add(new Course("CSC301", "Introduction to Software Engineering", "Introduction to Software Engineering"));
-        courses.add(new Course("CSC454", "The Business of Software", "The Business of Software"));
-        courses.add(new Course("CSC324", "Principles of Programming Languages", "Principles of Programming Languages"));
-        courses.add(new Course("CSC384", "Introduction to Artificial Intelligence", "Introduction to Artificial Intelligence"));
-        courses.add(new Course("CSC494", "Computer Science Project", "Computer Science Project"));
-*/
         CreateFileIfNotExist();
     }
     @Override
@@ -105,39 +96,6 @@ public class LocalCourseRepository implements usecases.ICourseRepository, MockTe
     }
 
     private List<Course> readCourses(){
-//        List<Course> courses = new ArrayList<>();
-//        //JSONParser parser = new JSONParser();
-//        try (String jsonString = Files.readString(Paths.get(FILE_NAME));
-//        ) { // Assuming data.json exists
-//           // Object obj = parser.parse(reader);
-//
-//            // If the root is a JSONObject
-//           // if (obj instanceof JSONObject) {
-//          //      JSONObject jsonObject = (JSONObject) obj;
-//                // String name = (String) jsonObject.get("name");
-//                // long age = (long) jsonObject.get("age");
-//                //  System.out.println("Name: " + name + ", Age: " + age);
-//           // }
-//            // If the root is a JSONArray
-//           // else if (obj instanceof JSONArray) {
-//            JSONArray jsonArray = new JSONArray(jsonString);
-//
-//            //JSONArray jsonArray = (jsonString) obj;
-//                for (Object element : jsonArray) {
-//                    JSONObject jsonObject = (JSONObject) element;
-//                    courses.add(new Course((String) jsonObject.get("courseId"),
-//                            (String) jsonObject.get("name"),
-//                            (String) jsonObject.get("description")));
-//                    // Process each item in the array
-//                    //System.out.println("Array Item: " + item.toJSONString());
-//                }
-//           // }
-//
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//        return courses;
-//    }
 
         List<Course> courses = new ArrayList<>();
 

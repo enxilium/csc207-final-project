@@ -15,6 +15,7 @@ import java.util.List;
 import entities.*;
 import interface_adapters.*;
 import interface_adapters.dashboard.*;
+import interface_adapters.flashcards.GenerateFlashcardsController;
 import interface_adapters.mock_test.MockTestController;
 import interface_adapters.workspace.*;
 
@@ -27,6 +28,8 @@ public class CourseWorkspaceView extends JPanel implements ActionListener, Prope
     private String courseId = null;
     private ViewManager viewManager = null;
     private CourseWorkspaceViewModel courseWorkspaceViewModel = null;
+    private JButton flashcardButton;
+    private GenerateFlashcardsController flashcardsController;
 
     public CourseWorkspaceView(CourseWorkspaceViewModel courseWorkspaceViewModel){
         this.courseWorkspaceViewModel = courseWorkspaceViewModel;
@@ -105,6 +108,12 @@ public class CourseWorkspaceView extends JPanel implements ActionListener, Prope
         JButton createFlashCardButton = new JButton("Create Flashcards");
         createFlashCardButton.setPreferredSize(new Dimension(150, 30));
         bottomPanel.add(createFlashCardButton);
+        createFlashCardButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                firePropertyChange("view", null, "generateFlashcards");
+            }
+        });
 
         //open test
         JButton testButton = new JButton("Open Tests");
@@ -174,6 +183,10 @@ public class CourseWorkspaceView extends JPanel implements ActionListener, Prope
 
     public void setMockTestController(MockTestController mockTestController) {
         this.mockTestController = mockTestController;
+    }
+
+    public void setFlashcardsController(GenerateFlashcardsController flashcardsController) {
+        this.flashcardsController = flashcardsController;
     }
 }
 

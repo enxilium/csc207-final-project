@@ -1,33 +1,45 @@
 package app;
 
 import javax.swing.*;
-import java.awt.*;
-import views.*;
-import javax.swing.border.EmptyBorder;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class Main {
     public static void main(String[] args) {
-        // The AppBuilder holds all the state and wiring logic.
-        AppBuilder appBuilder = new AppBuilder();
+        // Set look and feel for better UI
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            // If setting look and feel fails, continue with default
+        }
 
-        // Chain the building methods to construct the application piece by piece.
-        JFrame application = appBuilder
+        // Build the application using the AppBuilder
+        JFrame application = new AppBuilder()
+                // === Core Views ===
                 .addWriteTestView()
                 .addEvaluateTestView()
                 .addLoadingView()
+
+                // === Course Management Views ===
                 .addCourseDashboardView()
                 .addCourseWorkspaceView()
                 .addCourseCreateView()
                 .addCourseEditView()
-                .addCourseUseCases()
+
+                // === Flashcard Views ===
+                .addFlashcardViews()  // Add flashcard UI
+
+                // === Use Cases ===
                 .addMockTestGenerationUseCase()
                 .addEvaluateTestUseCase()
+                .addCourseUseCases()
+
+                // === Flashcard Use Case ===
+                .addFlashcardGenerationUseCase()  // Wire up flashcard logic
+
+                // === Build ===
                 .build();
 
+        // Display the application
         application.pack();
-        application.setLocationRelativeTo(null); // Center the window
         application.setVisible(true);
     }
 }

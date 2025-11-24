@@ -1,35 +1,48 @@
 package app;
 
-import data_access.GeminiFlashcardGenerator;
-import data_access.HardCodedCourseLookup;
 import data_access.DemoCourseAccess;
 import data_access.GeminiApiDataAccess;
+import data_access.GeminiFlashcardGenerator;
+import data_access.LocalCourseRepository;
 import entities.Course;
 import entities.PDFFile;
+import interface_adapters.LoadingViewModel;
+import interface_adapters.ViewManagerModel;
+import interface_adapters.dashboard.*;
+import interface_adapters.evaluate_test.*;
+import interface_adapters.flashcards.FlashcardViewModel;
+import interface_adapters.flashcards.GenerateFlashcardsController;
 import interface_adapters.flashcards.GenerateFlashcardsPresenter;
-import usecases.GenerateFlashcardsInputBoundary;
+import interface_adapters.mock_test.*;
+import interface_adapters.workspace.*;
+import usecases.*;
 import usecases.GenerateFlashcardsInteractor;
+import usecases.dashboard.*;
+import usecases.evaluate_test.EvaluateTestInteractor;
+import usecases.mock_test_generation.MockTestGenerationInteractor;
+import usecases.workspace.*;
+import views.*;
 
 import javax.swing.*;
 import java.awt.*;
 
-// === SHIRLEY: Course dashboard / workspace imports ===
-import interface_adapters.dashboard.*;
-import interface_adapters.workspace.*;
-import usecases.*;
-import usecases.dashboard.*;
-import usecases.workspace.*;
-import data_access.*;
-
 public class AppBuilder {
+    // --- Shared Components held by the Builder ---
+    private final CardLayout cardLayout = new CardLayout();
+    private final JPanel cardPanel = new JPanel(cardLayout);
+    private final ViewManagerModel viewManagerModel = new ViewManagerModel();
+    private final ViewManager viewManager = new ViewManager(cardPanel, cardLayout, viewManagerModel);
 
     // --- Data Access Objects ---
     private LocalCourseRepository courseDAO = new LocalCourseRepository();
     private final GeminiApiDataAccess geminiDAO = new GeminiApiDataAccess();
 
-            if (course == null || course.getUploadedFiles().isEmpty()) {
-                throw new IllegalStateException("No course or PDF found.");
-            }
+    // --- ViewModels and Views (stored for wiring) ---
+    private MockTestViewModel mockTestViewModel;
+    private EvaluateTestViewModel evaluateTestViewModel;
+    private LoadingViewModel loadingViewModel;
+    private WriteTestView writeTestView;
+    private EvaluateTestView evaluateTestView;
 
     // === SHIRLEY: Course dashboard/workspace view models & views ===
     private CourseDashboardViewModel courseDashboardViewModel;
@@ -43,6 +56,11 @@ public class AppBuilder {
 
     private CourseEditViewModel courseEditViewModel;
     private CourseEditView courseEditView;
+
+    // === FLASHCARD: Flashcard view models & views ===
+    private FlashcardViewModel flashcardViewModel;
+    private GenerateFlashcardsView generateFlashcardsView;
+    private FlashcardDisplayView flashcardDisplayView;
 
     public AppBuilder() {
         PDFFile dummyPdf = new PDFFile("test.pdf");
@@ -86,19 +104,24 @@ public class AppBuilder {
         // The Presenter for the evaluation results view
         EvaluateTestPresenter evalPresenter = new EvaluateTestPresenter(evaluateTestViewModel, loadingViewModel, viewManagerModel);
 
-            // Load PDF from src/main/resources/
-            ClassLoader cl = getClass().getClassLoader();
-            URL fileUrl = cl.getResource(pdf.getPath().toString());
+        // The Interactor for the evaluation use case. It correctly uses the DAOs.
+        EvaluateTestInteractor evalInteractor = new EvaluateTestInteractor(courseDAO, geminiDAO, evalPresenter);
 
-            if (fileUrl == null) {
-                System.out.println("ERROR: PDF not found in resources folder.");
-                return;
-            }
+        // The Controller that the WriteTestView will use to trigger the evaluation.
+        EvaluateTestController evalController = new EvaluateTestController(evalInteractor);
 
-            File file = new File(fileUrl.toURI());
+        // The Presenter for the WriteTestView's navigation (next/prev question).
+        MockTestPresenter mockTestPresenter = new MockTestPresenter(mockTestViewModel, viewManagerModel, loadingViewModel);
 
-            // Pass absolute path to Gemini generator
-            String content = file.getAbsolutePath();
+        // Inject both the controller (for submitting) and the presenter (for navigation) into the WriteTestView.
+        writeTestView.setController(evalController);
+        writeTestView.setPresenter(mockTestPresenter);
+
+        // Inject the presenter into the EvaluateTestView
+        evaluateTestView.setPresenter(evalPresenter);
+
+        return this;
+    }
 
 
     // === SHIRLEY: Course dashboard / workspace methods ===
@@ -177,6 +200,53 @@ public class AppBuilder {
         return this;
     }
 
+    // === FLASHCARD: Flashcard methods ===
+
+    /**
+     * Adds the flashcard generation and display views to the application.
+     * @return this AppBuilder for method chaining
+     */
+    public AppBuilder addFlashcardViews() {
+        // Initialize ViewModel
+        this.flashcardViewModel = new FlashcardViewModel();
+
+        // Initialize and add GenerateFlashcardsView
+        this.generateFlashcardsView = new GenerateFlashcardsView(flashcardViewModel);
+        cardPanel.add(generateFlashcardsView, generateFlashcardsView.getViewName());
+
+        // Initialize and add FlashcardDisplayView
+        this.flashcardDisplayView = new FlashcardDisplayView(flashcardViewModel);
+        cardPanel.add(flashcardDisplayView, flashcardDisplayView.getViewName());
+
+        return this;
+    }
+
+    /**
+     * Wires up the flashcard generation use case with all necessary dependencies.
+     * @return this AppBuilder for method chaining
+     */
+    public AppBuilder addFlashcardGenerationUseCase() {
+        // Create the flashcard generator (using Gemini API)
+        GeminiFlashcardGenerator generator = new GeminiFlashcardGenerator();
+
+        // Create the presenter
+        GenerateFlashcardsPresenter presenter =
+                new GenerateFlashcardsPresenter(flashcardViewModel);
+
+        // Create the interactor
+        GenerateFlashcardsInteractor interactor =
+                new GenerateFlashcardsInteractor(generator, presenter);
+
+        // Create the controller
+        GenerateFlashcardsController controller =
+                new GenerateFlashcardsController(interactor);
+
+        // Inject controller into the view
+        generateFlashcardsView.setController(controller);
+
+        return this;
+    }
+
     public JFrame build() {
         JFrame application = new JFrame("StudyFlow AI Assistant");
         application.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -188,8 +258,6 @@ public class AppBuilder {
         viewManagerModel.setState(this.courseDashboardView.getViewName());
         viewManagerModel.firePropertyChange();
 
-        } catch (Exception e) {
-            System.err.println("Error running flashcard demo: " + e.getMessage());
-        }
+        return application;
     }
 }

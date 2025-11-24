@@ -19,9 +19,14 @@ public class Main {
                 .addCourseWorkspaceView()
                 .addCourseCreateView()
                 .addCourseEditView()
-                .addCourseUseCases()
+
+                // === Flashcard Views ===
+                .addFlashcardViews()  // Add flashcard UI
+
+                // === Use Cases ===
                 .addMockTestGenerationUseCase()
                 .addEvaluateTestUseCase()
+                .addFlashcardGenerationUseCase()
                 .addLectureNotesUseCase()
                 .build();
 

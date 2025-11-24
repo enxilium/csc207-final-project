@@ -2,27 +2,30 @@ package app;
 
 import data_access.DemoCourseAccess;
 import data_access.GeminiApiDataAccess;
+import data_access.GeminiFlashcardGenerator;
+import data_access.LocalCourseRepository;
 import entities.Course;
 import entities.PDFFile;
 import interface_adapters.LoadingViewModel;
 import interface_adapters.ViewManagerModel;
+import interface_adapters.dashboard.*;
 import interface_adapters.evaluate_test.*;
+import interface_adapters.flashcards.FlashcardViewModel;
+import interface_adapters.flashcards.GenerateFlashcardsController;
+import interface_adapters.flashcards.GenerateFlashcardsPresenter;
 import interface_adapters.mock_test.*;
+import interface_adapters.workspace.*;
+import usecases.*;
+import usecases.GenerateFlashcardsInteractor;
+import usecases.dashboard.*;
 import usecases.evaluate_test.EvaluateTestInteractor;
 import usecases.mock_test_generation.MockTestGenerationInteractor;
+import usecases.workspace.*;
 
 import views.*;
 
 import javax.swing.*;
 import java.awt.*;
-
-// === SHIRLEY: Course dashboard / workspace imports ===
-import interface_adapters.dashboard.*;
-import interface_adapters.workspace.*;
-import usecases.*;
-import usecases.dashboard.*;
-import usecases.workspace.*;
-import data_access.*;
 
 public class AppBuilder {
     // --- Shared Components held by the Builder ---
@@ -57,6 +60,11 @@ public class AppBuilder {
 
     private CourseEditViewModel courseEditViewModel;
     private CourseEditView courseEditView;
+
+    // === WENLE: Flashcard view models & views ===
+    private FlashcardViewModel flashcardViewModel;
+    private GenerateFlashcardsView generateFlashcardsView;
+    private FlashcardDisplayView flashcardDisplayView;
 
     public AppBuilder() {
         PDFFile dummyPdf = new PDFFile("test.pdf");
@@ -259,6 +267,52 @@ public class AppBuilder {
         this.courseCreateView.setCourseWorkspaceController(courseController);
 
         this.courseEditView.setCourseWorkspaceController(courseController);
+
+        return this;
+    }
+
+    // === FLASHCARD: Flashcard methods ===
+
+    /**
+     * Adds the flashcard generation and display views to the application.
+     * @return this AppBuilder for method chaining
+     */
+    public AppBuilder addFlashcardViews() {
+        this.flashcardViewModel = new FlashcardViewModel();
+
+        this.generateFlashcardsView = new GenerateFlashcardsView(flashcardViewModel);
+        cardPanel.add(generateFlashcardsView, generateFlashcardsView.getViewName());
+
+        this.flashcardDisplayView = new FlashcardDisplayView(flashcardViewModel);
+        this.flashcardDisplayView.setViewManagerModel(viewManagerModel);
+        cardPanel.add(flashcardDisplayView, flashcardDisplayView.getViewName());
+
+        return this;
+    }
+
+    /**
+     * Wires up the flashcard generation use case with all necessary dependencies.
+     * @return this AppBuilder for method chaining
+     */
+    public AppBuilder addFlashcardGenerationUseCase() {
+        // Create the flashcard generator (using Gemini API)
+        GeminiFlashcardGenerator generator = new GeminiFlashcardGenerator();
+
+        // Create the presenter
+        GenerateFlashcardsPresenter presenter =
+                new GenerateFlashcardsPresenter(flashcardViewModel, viewManagerModel);
+
+        // Create the interactor
+        GenerateFlashcardsInteractor interactor =
+                new GenerateFlashcardsInteractor(generator, presenter);
+
+        // Create the controller
+        GenerateFlashcardsController controller =
+                new GenerateFlashcardsController(interactor);
+
+        // Inject controller into the view
+        generateFlashcardsView.setController(controller);
+        courseWorkspaceView.setFlashcardsController(controller);
 
         return this;
     }

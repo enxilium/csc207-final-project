@@ -35,6 +35,9 @@ public class GenerateFlashcardsInteractor implements GenerateFlashcardsInputBoun
         } catch (IOException e) {
             // Handle any I/O errors
             presenter.presentError("Failed to generate flashcards: " + e.getMessage());
-        }
+        } catch (RuntimeException e) {
+            // Handle unexpected runtime errors to prevent app crash
+            presenter.presentError("An unexpected error occurred: " + e.getMessage());
+    }
     }
 }

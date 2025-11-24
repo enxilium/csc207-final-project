@@ -16,15 +16,6 @@ public class Flashcard {
         this.back = answer;
     }
 
-    // Overloaded constructor for explicitly defining front/back
-    public Flashcard(String front, String back, boolean isFrontBack) {
-        this.front = front;
-        this.back = back;
-        // still assign to question/answer for backward compatibility
-        this.question = front;
-        this.answer = back;
-    }
-
     // Original getters remain untouched
     public String getQuestion() {
         return question;

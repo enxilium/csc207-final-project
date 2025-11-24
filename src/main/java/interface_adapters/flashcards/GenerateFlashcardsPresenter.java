@@ -4,23 +4,26 @@ import usecases.GenerateFlashcardsOutputBoundary;
 import usecases.GenerateFlashcardsResponseModel;
 
 /**
- * Console presenter for flashcard generation.
- * Prints flashcards or error messages to the console for testing.
+ * Presenter for flashcard generation.
+ * Updates the ViewModel with generated flashcards or error messages.
  */
 public class GenerateFlashcardsPresenter implements GenerateFlashcardsOutputBoundary {
+    private final FlashcardViewModel viewModel;
+
+    public GenerateFlashcardsPresenter(FlashcardViewModel viewModel) {
+        this.viewModel = viewModel;
+    }
 
     @Override
     public void presentFlashcards(GenerateFlashcardsResponseModel responseModel) {
-        System.out.println("\nFlashcards generated successfully:\n");
-        responseModel.getFlashcardSet().getFlashcards().forEach(card -> {
-            System.out.println("Q: " + card.getQuestion());
-            System.out.println("A: " + card.getAnswer());
-            System.out.println();
-        });
+        viewModel.setLoading(false);
+        viewModel.setCurrentFlashcardSet(responseModel.getFlashcardSet());
+        viewModel.setErrorMessage(null);
     }
 
     @Override
     public void presentError(String message) {
-        System.out.println("Error: " + message);
+        viewModel.setLoading(false);
+        viewModel.setErrorMessage(message);
     }
 }

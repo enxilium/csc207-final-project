@@ -43,7 +43,7 @@ public class ViewTimelineInteractor implements ViewTimelineInputBoundary {
         switch (e.getType()) {
             case NOTES_GENERATED:
                 vm.icon = "notes"; vm.type = "NOTES";
-                vm.title = (e.getTitle() == null ? "Notes" : e.getTitle());
+                vm.title = (e.getTitle() == null || e.getTitle().isEmpty() ? "Notes" : e.getTitle());
                 vm.snippet = e.getSnippet();
                 break;
             case FLASHCARDS_GENERATED:
@@ -61,6 +61,8 @@ public class ViewTimelineInteractor implements ViewTimelineInputBoundary {
                 vm.title = "Quiz — Submitted";
                 if (e.getNumQuestions() != null && e.getScore() != null) {
                     vm.subtitle = "Score " + e.getScore() + "/" + e.getNumQuestions();
+                } else {
+                    vm.subtitle = "";
                 }
                 break;
         }

@@ -153,6 +153,8 @@ This architecture ensures testability, modularity, and easy future extensions.
 
 **API:** Google Gemini Generative Language API  
 **Docs:** https://ai.google.dev  
+**Main Service** Provided: Given a topic + timeframe, generates a structured JSON lesson plan (summaries, readings, practice prompts); can reformat/edit lessons.
+
 
 **Features Used:**  
 - Summaries  
@@ -169,11 +171,7 @@ This architecture ensures testability, modularity, and easy future extensions.
 5. Output saved locally  
 6. UI displays final results  
 
-**API for the project:
-**API Name: Google Gemini (Generative Language API) — https://ai.google.dev
-Main Service Provided: Given a topic + timeframe, generates a structured JSON lesson plan (summaries, readings, practice prompts); can reformat/edit lessons.
-
-Current functionality:
+**Current functionality:**
 <img width="2559" height="1343" alt="image" src="https://github.com/user-attachments/assets/27bf03bd-a6d2-4f6a-a1a6-6d806e0af295" />
 <img width="2559" height="1334" alt="image" src="https://github.com/user-attachments/assets/51d65ac9-872f-4f55-80d6-84ec8ff9df0d" />
 <img width="2559" height="1327" alt="image" src="https://github.com/user-attachments/assets/7ad03afa-e912-4524-9819-05c702ee1981" />

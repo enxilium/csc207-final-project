@@ -207,5 +207,6 @@ public class EvaluateTestView extends JPanel implements PropertyChangeListener {
         // --- Navigation actions are simple UI state changes handled by the Presenter ---
         nextButton.addActionListener(e -> presenter.goToNextQuestion());
         prevButton.addActionListener(e -> presenter.goToPreviousQuestion());
+        finishButton.addActionListener(e -> presenter.presentDashboard());
     }
 }

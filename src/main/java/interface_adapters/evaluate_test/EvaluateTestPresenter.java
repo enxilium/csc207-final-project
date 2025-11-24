@@ -2,6 +2,7 @@ package interface_adapters.evaluate_test;
 
 import interface_adapters.LoadingViewModel;
 import interface_adapters.ViewManagerModel;
+import interface_adapters.dashboard.CourseDashboardViewModel;
 import interface_adapters.mock_test.MockTestState;
 import interface_adapters.mock_test.MockTestViewModel;
 import usecases.evaluate_test.EvaluateTestOutputBoundary;
@@ -10,12 +11,14 @@ import usecases.evaluate_test.EvaluateTestOutputData;
 public class EvaluateTestPresenter implements EvaluateTestOutputBoundary {
     private final EvaluateTestViewModel evaluateTestViewModel;
     private final LoadingViewModel loadingViewModel;
+    private final CourseDashboardViewModel dashboardViewModel;
     private final ViewManagerModel viewManagerModel;
 
     public EvaluateTestPresenter(EvaluateTestViewModel evaluateTestViewModel, LoadingViewModel loadingViewModel,
-                                 ViewManagerModel viewManagerModel) {
+                                 CourseDashboardViewModel courseDashboardViewModel, ViewManagerModel viewManagerModel) {
         this.evaluateTestViewModel = evaluateTestViewModel;
         this.loadingViewModel = loadingViewModel;
+        this.dashboardViewModel = courseDashboardViewModel;
         this.viewManagerModel = viewManagerModel;
     }
 
@@ -62,5 +65,11 @@ public class EvaluateTestPresenter implements EvaluateTestOutputBoundary {
         evaluateTestState.setCurrentQuestionIndex(currentQuestionIndex - 1);
 
         evaluateTestViewModel.firePropertyChange();
+    }
+
+    public void presentDashboard() {
+        // Switch back to dashboard
+        this.viewManagerModel.setState(this.dashboardViewModel.getViewName());
+        this.viewManagerModel.firePropertyChange();
     }
 }

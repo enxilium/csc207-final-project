@@ -98,7 +98,8 @@ public class AppBuilder {
 
     public AppBuilder addEvaluateTestUseCase() {
         // The Presenter for the evaluation results view
-        EvaluateTestPresenter evalPresenter = new EvaluateTestPresenter(evaluateTestViewModel, loadingViewModel, viewManagerModel);
+        EvaluateTestPresenter evalPresenter = new EvaluateTestPresenter(evaluateTestViewModel, loadingViewModel,
+                courseDashboardViewModel, viewManagerModel);
 
         // The Interactor for the evaluation use case. It correctly uses the DAOs.
         EvaluateTestInteractor evalInteractor = new EvaluateTestInteractor(courseDAO, geminiDAO, evalPresenter);

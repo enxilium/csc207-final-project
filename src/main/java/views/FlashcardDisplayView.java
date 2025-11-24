@@ -1,5 +1,6 @@
 package views;
 
+import interface_adapters.ViewManagerModel;
 import interface_adapters.flashcards.FlashcardViewModel;
 import entities.Flashcard;
 import entities.FlashcardSet;
@@ -17,6 +18,7 @@ import java.beans.PropertyChangeListener;
 public class FlashcardDisplayView extends JPanel implements PropertyChangeListener {
     private final String viewName = "flashcardDisplay";
     private final FlashcardViewModel viewModel;
+    private ViewManagerModel viewManagerModel;
 
     // UI Components
     private final JLabel titleLabel;
@@ -158,9 +160,10 @@ public class FlashcardDisplayView extends JPanel implements PropertyChangeListen
         });
 
         backButton.addActionListener(e -> {
-            // Navigate back to generate flashcards view
-            // This will be handled by ViewManager
-            firePropertyChange("navigateToGenerate", null, null);
+            if (viewManagerModel != null) {
+                viewManagerModel.setState("workspace");
+                viewManagerModel.firePropertyChange();
+            }
         });
     }
 
@@ -240,6 +243,10 @@ public class FlashcardDisplayView extends JPanel implements PropertyChangeListen
         prevButton.setEnabled(enabled);
         nextButton.setEnabled(enabled);
         backButton.setEnabled(true); // Always enabled
+    }
+
+    public void setViewManagerModel(ViewManagerModel viewManagerModel) {
+        this.viewManagerModel = viewManagerModel;
     }
 
     public String getViewName() {

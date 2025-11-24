@@ -57,13 +57,13 @@ public class AppBuilder {
     private CourseEditViewModel courseEditViewModel;
     private CourseEditView courseEditView;
 
-    // === FLASHCARD: Flashcard view models & views ===
+    // === WENLE: Flashcard view models & views ===
     private FlashcardViewModel flashcardViewModel;
     private GenerateFlashcardsView generateFlashcardsView;
     private FlashcardDisplayView flashcardDisplayView;
 
     public AppBuilder() {
-        PDFFile dummyPdf = new PDFFile("test.pdf");
+        PDFFile dummyPdf = new PDFFile("src/main/resources/test.pdf");
         Course dummyCourse = new Course("PHL245", "Modern Symbolic Logic", "demo course");
         dummyCourse.addFile(dummyPdf);
         courseDAO.create(dummyCourse);
@@ -207,15 +207,13 @@ public class AppBuilder {
      * @return this AppBuilder for method chaining
      */
     public AppBuilder addFlashcardViews() {
-        // Initialize ViewModel
         this.flashcardViewModel = new FlashcardViewModel();
 
-        // Initialize and add GenerateFlashcardsView
         this.generateFlashcardsView = new GenerateFlashcardsView(flashcardViewModel);
         cardPanel.add(generateFlashcardsView, generateFlashcardsView.getViewName());
 
-        // Initialize and add FlashcardDisplayView
         this.flashcardDisplayView = new FlashcardDisplayView(flashcardViewModel);
+        this.flashcardDisplayView.setViewManagerModel(viewManagerModel);
         cardPanel.add(flashcardDisplayView, flashcardDisplayView.getViewName());
 
         return this;
@@ -231,7 +229,7 @@ public class AppBuilder {
 
         // Create the presenter
         GenerateFlashcardsPresenter presenter =
-                new GenerateFlashcardsPresenter(flashcardViewModel);
+                new GenerateFlashcardsPresenter(flashcardViewModel, viewManagerModel);
 
         // Create the interactor
         GenerateFlashcardsInteractor interactor =
@@ -243,6 +241,7 @@ public class AppBuilder {
 
         // Inject controller into the view
         generateFlashcardsView.setController(controller);
+        courseWorkspaceView.setFlashcardsController(controller);
 
         return this;
     }

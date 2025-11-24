@@ -62,26 +62,44 @@ public class GeminiFlashcardGenerator implements FlashcardGenerator {
     @Override
     public FlashcardSet generateForCourse(String courseName, String contentInput) throws IOException {
 
+        // DEBUG: Print input parameters
+        System.out.println("=== GeminiFlashcardGenerator.generateForCourse ===");
+        System.out.println("API Key exists: " + (apiKey != null && !apiKey.isEmpty()));
+        System.out.println("Course name: " + courseName);
+        System.out.println("Content input: [" + contentInput + "]");
+
         List<Part> partsList = new ArrayList<>();
         partsList.add(Part.fromText(flashcardPrompt));
 
         // Check whether contentInput is a PDF filename
         File maybePdf = new File(contentInput);
+
+        // DEBUG: Print file info
+        System.out.println("File exists: " + maybePdf.exists());
+        System.out.println("Absolute path: " + maybePdf.getAbsolutePath());
+
         if (maybePdf.exists() && contentInput.toLowerCase().endsWith(".pdf")) {
+            System.out.println("Reading PDF file...");
             byte[] pdfBytes = Files.readAllBytes(maybePdf.toPath());
+            System.out.println("PDF size: " + pdfBytes.length + " bytes");
 
             partsList.add(
                     Part.fromBytes(pdfBytes, "application/pdf")
             );
 
         } else {
+            System.out.println("Using text content instead of PDF");
             partsList.add(Part.fromText(contentInput));
         }
 
+        System.out.println("Calling Gemini API...");
         Content request = Content.fromParts(partsList.toArray(new Part[0]));
 
         GenerateContentResponse response =
                 client.models.generateContent("gemini-2.5-flash", request, generationConfig);
+
+        // DEBUG: Print response
+        System.out.println("Response received: " + response.text());
 
         FlashcardResponse parsed = gson.fromJson(response.text(), FlashcardResponse.class);
         if (parsed == null || parsed.questions == null || parsed.answers == null) {
@@ -94,6 +112,7 @@ public class GeminiFlashcardGenerator implements FlashcardGenerator {
             flashcards.add(new Flashcard(parsed.questions.get(i), parsed.answers.get(i)));
         }
 
+        System.out.println("Successfully generated " + flashcards.size() + " flashcards!");
         return new FlashcardSet(courseName, flashcards);
     }
 

@@ -111,7 +111,17 @@ public class CourseWorkspaceView extends JPanel implements ActionListener, Prope
         createFlashCardButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                firePropertyChange("view", null, "generateFlashcards");
+                if (flashcardsController != null) {
+                    System.out.println("=== Generating flashcards ===");
+
+                    String pdfPath = "src/main/resources/test.pdf";
+                    System.out.println("PDF path: " + pdfPath);
+                    System.out.println("File exists: " + new java.io.File(pdfPath).exists());
+
+                    flashcardsController.generateFlashcards("PHL245", pdfPath);
+                } else {
+                    System.out.println("ERROR: flashcardsController is null!");
+                }
             }
         });
 

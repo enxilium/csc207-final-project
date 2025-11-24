@@ -186,12 +186,15 @@ public class GenerateFlashcardsView extends JPanel implements PropertyChangeList
 
             case FlashcardViewModel.ERROR_OCCURRED:
                 String error = viewModel.getErrorMessage();
-                statusLabel.setText("Error: " + error);
-                viewModel.setLoading(false);
-                JOptionPane.showMessageDialog(this,
-                        error,
-                        "Generation Error",
-                        JOptionPane.ERROR_MESSAGE);
+                // Only show error dialog if there's actually an error
+                if (error != null && !error.isEmpty()) {
+                    statusLabel.setText("Error: " + error);
+                    viewModel.setLoading(false);
+                    JOptionPane.showMessageDialog(this,
+                            error,
+                            "Generation Error",
+                            JOptionPane.ERROR_MESSAGE);
+                }
                 break;
 
             case FlashcardViewModel.LOADING_CHANGED:

@@ -28,6 +28,7 @@ public class Main {
                 .addEvaluateTestUseCase()
                 .addFlashcardGenerationUseCase()
                 .addLectureNotesUseCase()
+                .addCourseUseCases()
                 .build();
 
         application.pack();

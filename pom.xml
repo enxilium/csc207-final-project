@@ -28,6 +28,7 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.13.2</version>
+        </dependency>
         <dependency>
             <groupId>com.google.genai</groupId>
             <artifactId>google-genai</artifactId>
@@ -89,5 +90,4 @@
         </plugins>
     </build>
 
-</project>
 </project>

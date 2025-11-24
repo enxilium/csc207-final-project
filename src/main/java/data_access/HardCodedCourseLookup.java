@@ -6,14 +6,6 @@ import usecases.lecturenotes.CourseLookupGateway;
 
 public class HardCodedCourseLookup implements CourseLookupGateway {
     private final Course demo;
-/**
- * Temporary hard-coded course lookup for demo and testing purposes.
- * TODO: Replace with proper CourseRepository interface and file-based implementation
- * when integrating with the full application architecture.
- */
-public class HardCodedCourseLookup {
-
-    private final Course demoCourse;
 
     public HardCodedCourseLookup() {
         // Match the course you create in AppBuilder (PHL245)

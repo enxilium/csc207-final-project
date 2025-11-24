@@ -14,7 +14,7 @@ public class HardCodedCourseLookup {
 
     public HardCodedCourseLookup() {
 
-        this.demoCourse = new Course("RLG200");
+        this.demoCourse = new Course("RLG200", "Religion Studies", "Demo course for testing");
 
         // Only the filename. Must be inside src/main/resources/
         this.demoCourse.addFile(new PDFFile("test.pdf"));

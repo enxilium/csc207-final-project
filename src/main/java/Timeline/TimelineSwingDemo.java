@@ -1,5 +1,10 @@
 package Timeline;
 
+import interface_adapters.ViewManagerModel;
+import views.FlashcardsView;
+import views.NotesView;
+import views.QuizView;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.UUID;
@@ -38,18 +43,36 @@ public class TimelineSwingDemo {
         ViewTimelineInteractor interactor = new ViewTimelineInteractor(repo, presenter);
         TimelineController controller = new TimelineController(interactor);
 
-        // 3. The Swing panel
-        ViewTimelineView timelineView = new ViewTimelineView(vm, controller);
+        // 3. Create views for study materials
+        ViewManagerModel viewManagerModel = new ViewManagerModel();
+        NotesView notesView = new NotesView();
+        FlashcardsView flashcardsView = new FlashcardsView();
+        QuizView quizView = new QuizView();
 
-        // 4. Show window
+        // 4. The Swing panel
+        ViewTimelineView timelineView = new ViewTimelineView(vm, controller, viewManagerModel, notesView, flashcardsView, quizView);
+
+        // 5. Set up card panel for view switching
+        CardLayout cardLayout = new CardLayout();
+        JPanel cardPanel = new JPanel(cardLayout);
+        cardPanel.add(timelineView, "timeline");
+        cardPanel.add(notesView, "notes");
+        cardPanel.add(flashcardsView, "flashcards");
+        cardPanel.add(quizView, "quiz");
+
+        // 6. Show window
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Timeline Demo");
             frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
             frame.setLayout(new BorderLayout());
-            frame.add(timelineView, BorderLayout.CENTER);
+            frame.add(cardPanel, BorderLayout.CENTER);
             frame.setSize(500, 600);
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
+
+            // Set initial view to timeline
+            viewManagerModel.setState("timeline");
+            viewManagerModel.firePropertyChange();
 
             // Load the timeline for this course
             controller.open(courseId);

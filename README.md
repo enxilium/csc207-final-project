@@ -1,7 +1,7 @@
 # Team Project
 Presentation slides: https://docs.google.com/presentation/d/18canBrp3pQwd7SYneYI0OH1R9T0T_DX1/edit?slide=id.p1#slide=id.p1
 
-**Team Name: AidLearn
+Team Name: AidLearn
 **Domain: AI-powered learning assistant that transforms uploaded course materials into personalized study resources.
 Description: The system allows users to upload course-related PDF files such as lecture slides, readings, or textbooks. Once uploaded, the app automatically extracts and sends the content to Google Gemini, and receives structured outputs in JSON format. These include summarized notes, flashcards, quizzes, and practice tests. The generated materials are stored locally and displayed on the user’s course dashboard. 
 

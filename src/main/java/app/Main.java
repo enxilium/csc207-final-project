@@ -4,21 +4,18 @@ import javax.swing.*;
 
 public class Main {
     public static void main(String[] args) {
-        // The AppBuilder holds all the state and wiring logic.
         AppBuilder appBuilder = new AppBuilder();
 
-        // Chain the building methods to construct the application piece by piece.
+        // ========== TIMELINE FEATURE START ==========
+        // Add .addTimelineView() to your existing builder chain
+        // Example: appBuilder.addCourseDashboard().addTimelineView().addMockTests()...
+        // ========== TIMELINE FEATURE END ==========
         JFrame application = appBuilder
-                .addDemoView()
-                .addWriteTestView()
-                .addEvaluateTestView()
-                .addLoadingView()
-                .addMockTestGenerationUseCase()
-                .addEvaluateTestUseCase()
+                .addTimelineView()
                 .build();
 
         application.pack();
-        application.setLocationRelativeTo(null); // Center the window
+        application.setLocationRelativeTo(null);
         application.setVisible(true);
     }
 }

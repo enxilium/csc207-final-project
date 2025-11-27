@@ -17,9 +17,9 @@ public class ViewTimelineSwingPresenter implements ViewTimelineOutputBoundary {
         ViewTimelineResponse resp = new ViewTimelineResponse();
         resp.setEmpty(true);
 
-        ViewTimelineResponse.TimelineCardVM card = new ViewTimelineResponse.TimelineCardVM();
-        card.title = "Info";
-        card.subtitle = message;
+        ViewTimelineResponse.TimelineCardVM card = resp.new TimelineCardVM();
+        card.setTitle("Info");
+        card.setSubtitle(message);
         resp.getItems().add(card);
 
         vm.setFromResponse(resp);

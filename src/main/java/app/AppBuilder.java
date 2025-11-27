@@ -1,101 +1,109 @@
 package app;
 
-import data_access.GeminiApiDataAccess;
-import entities.Course;
-import entities.PDFFile;
-import interface_adapters.LoadingViewModel;
+import Timeline.*;
 import interface_adapters.ViewManagerModel;
-import interface_adapters.evaluate_test.*;
-import interface_adapters.mock_test.*;
-import usecases.evaluate_test.EvaluateTestInteractor;
-import usecases.mock_test_generation.MockTestGenerationInteractor;
 import views.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.nio.file.Paths;
 
 public class AppBuilder {
     // --- Shared Components held by the Builder ---
     private final CardLayout cardLayout = new CardLayout();
     private final JPanel cardPanel = new JPanel(cardLayout);
     private final ViewManagerModel viewManagerModel = new ViewManagerModel();
-    private final ViewManager viewManager = new ViewManager(cardPanel, cardLayout, viewManagerModel);
 
-    // --- Data Access Objects ---
-    // TODO: Add proper Course management data access implementation (file-based)
-    private Object courseDAO = null;
-    private final GeminiApiDataAccess geminiDAO = new GeminiApiDataAccess();
-
-    // --- ViewModels and Views (stored for wiring) ---
-    private MockTestViewModel mockTestViewModel;
-    private EvaluateTestViewModel evaluateTestViewModel;
-    private LoadingViewModel loadingViewModel;
-    private WriteTestView writeTestView;
-    private EvaluateTestView evaluateTestView;
+    // ========== TIMELINE FEATURE START ==========
+    // Timeline components - add these fields to your existing AppBuilder
+    private final ITimelineRepository timelineRepository;
+    private final TimelineLogger timelineLogger;
+    // ========== TIMELINE FEATURE END ==========
+    
+    private String initialViewName; // Track the first view added for initial state
 
     public AppBuilder() {
+        // Initialize ViewManager (registers itself as listener, doesn't need to be stored)
+        new ViewManager(cardPanel, cardLayout, viewManagerModel);
+        
+        // ========== TIMELINE FEATURE START ==========
+        // Initialize Timeline repository - add this to your existing constructor
+        timelineRepository = new InMemoryTimelineRepository();
+        timelineLogger = new TimelineLogger(timelineRepository);
+        // ========== TIMELINE FEATURE END ==========
     }
 
+    // ========== TIMELINE FEATURE START ==========
+    // Add this method to your existing AppBuilder class
 
-    public AppBuilder addWriteTestView() {
-        writeTestView = new WriteTestView(mockTestViewModel); // The view for taking the test
-        cardPanel.add(writeTestView, mockTestViewModel.getViewName());
-        return this;
-    }
+    /**
+     * Adds the Timeline view to the application.
+     * This method can be called alongside other feature setup methods.
+     * @return this AppBuilder instance for method chaining
+     */
+    public AppBuilder addTimelineView() {
+        // Create study material views for displaying content when timeline items are clicked
+        NotesView notesView = new NotesView();
+        FlashcardsView flashcardsView = new FlashcardsView();
+        QuizView quizView = new QuizView();
 
-    public AppBuilder addEvaluateTestView() {
-        evaluateTestViewModel = new EvaluateTestViewModel();
-        evaluateTestView = new EvaluateTestView(evaluateTestViewModel);
-        cardPanel.add(evaluateTestView, evaluateTestViewModel.getViewName());
-        return this;
-    }
+        // Wire up Timeline components
+        ViewTimelineViewModel timelineViewModel = new ViewTimelineViewModel();
+        ViewTimelineSwingPresenter presenter = new ViewTimelineSwingPresenter(timelineViewModel);
+        ViewTimelineInteractor interactor = new ViewTimelineInteractor(timelineRepository, presenter);
+        TimelineController timelineController = new TimelineController(interactor);
 
-    public AppBuilder addLoadingView() {
-        loadingViewModel = new LoadingViewModel();
-        LoadingView loadingView = new LoadingView(loadingViewModel);
-        cardPanel.add(loadingView, loadingViewModel.getViewName());
-        return this;
-    }
+        // Create the Timeline view
+        ViewTimelineView timelineView = new ViewTimelineView(timelineViewModel, timelineController,
+                                          viewManagerModel, notesView, flashcardsView, quizView);
 
-    public AppBuilder addMockTestGenerationUseCase() {
-        MockTestPresenter presenter = new MockTestPresenter(mockTestViewModel, viewManagerModel, loadingViewModel);
-        MockTestGenerationInteractor interactor = new MockTestGenerationInteractor(courseDAO, geminiDAO, presenter);
-        MockTestController controller = new MockTestController(interactor);
-        return this;
-    }
+        // Register all views with the card panel
+        cardPanel.add(timelineView, timelineViewModel.getViewName());
+        cardPanel.add(notesView, "notes");
+        cardPanel.add(flashcardsView, "flashcards");
+        cardPanel.add(quizView, "quiz");
 
-    public AppBuilder addEvaluateTestUseCase() {
-        // The Presenter for the evaluation results view
-        EvaluateTestPresenter evalPresenter = new EvaluateTestPresenter(evaluateTestViewModel, loadingViewModel, viewManagerModel);
-
-        // The Interactor for the evaluation use case. It correctly uses the DAOs.
-        EvaluateTestInteractor evalInteractor = new EvaluateTestInteractor(courseDAO, geminiDAO, evalPresenter);
-
-        // The Controller that the WriteTestView will use to trigger the evaluation.
-        EvaluateTestController evalController = new EvaluateTestController(evalInteractor);
-
-        // The Presenter for the WriteTestView's navigation (next/prev question).
-        MockTestPresenter mockTestPresenter = new MockTestPresenter(mockTestViewModel, viewManagerModel, loadingViewModel);
-
-        // Inject both the controller (for submitting) and the presenter (for navigation) into the WriteTestView.
-        writeTestView.setController(evalController);
-        writeTestView.setPresenter(mockTestPresenter);
-
-        // Inject the presenter into the EvaluateTestView
-        evaluateTestView.setPresenter(evalPresenter);
+        // Set as initial view if this is the first view added
+        if (initialViewName == null) {
+            initialViewName = timelineViewModel.getViewName();
+        }
 
         return this;
     }
 
+    /**
+     * Gets the TimelineLogger instance for other features to log Timeline events.
+     * Other features can use this to log when they generate notes, flashcards, or quizzes.
+     * @return The TimelineLogger instance
+     */
+    public TimelineLogger getTimelineLogger() {
+        return timelineLogger;
+    }
+    // ========== TIMELINE FEATURE END ==========
+
+    /**
+     * Sets the initial view name. Can be called to override the default (first added view).
+     * @param viewName The name of the view to show initially
+     * @return this AppBuilder instance for method chaining
+     */
+    public AppBuilder setInitialView(String viewName) {
+        this.initialViewName = viewName;
+        return this;
+    }
+
+    /**
+     * Builds and returns the main application JFrame.
+     * @return The configured JFrame
+     */
     public JFrame build() {
         JFrame application = new JFrame("StudyFlow AI Assistant");
         application.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         application.add(cardPanel);
 
-        // Set the initial view
-        viewManagerModel.setState("demo view");
-        viewManagerModel.firePropertyChange();
+        // Set the initial view (use the first added view if no specific initial view was set)
+        if (initialViewName != null) {
+            viewManagerModel.setState(initialViewName);
+            viewManagerModel.firePropertyChange();
+        }
 
         return application;
     }

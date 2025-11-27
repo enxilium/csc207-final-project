@@ -22,6 +22,7 @@ public class ViewTimelineViewModel {
     }
 
     public UUID getCourseId() { return courseId; }
+    public void setCourseId(UUID courseId) { this.courseId = courseId; }
     public boolean isEmpty() { return isEmpty; }
     public List<ViewTimelineResponse.TimelineCardVM> getItems() { return new ArrayList<>(items); } // Defensive copy
 

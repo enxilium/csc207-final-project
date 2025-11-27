@@ -597,15 +597,43 @@ class ViewTimelineViewTest {
         response.getItems().add(card);
         triggerPropertyChange(response);
         
+        // Reset state to a known value
+        viewManagerModel.setState("timeline");
+        viewManagerModel.firePropertyChange();
         String initialState = viewManagerModel.getState();
-        JList<?> list = getList();
-        // Try to click on an index that doesn't exist
+        assertEquals("timeline", initialState); // Ensure we start with timeline
+        
+        @SuppressWarnings("unchecked")
+        JList<ViewTimelineResponse.TimelineCardVM> list = (JList<ViewTimelineResponse.TimelineCardVM>) getList();
+        DefaultListModel<ViewTimelineResponse.TimelineCardVM> listModel = 
+            (DefaultListModel<ViewTimelineResponse.TimelineCardVM>) list.getModel();
+        
+        // Create a custom JList that returns an out-of-bounds index by overriding locationToIndex
+        class TestJList extends JList<ViewTimelineResponse.TimelineCardVM> {
+            TestJList(DefaultListModel<ViewTimelineResponse.TimelineCardVM> model) {
+                super(model);
+            }
+            @Override
+            public int locationToIndex(Point location) {
+                // Return an index that's >= listModel.getSize() to test bounds check
+                return getModel().getSize(); // This will be >= size, so bounds check fails
+            }
+        }
+        TestJList testList = new TestJList(listModel);
+        @SuppressWarnings("unchecked")
+        ListCellRenderer<? super ViewTimelineResponse.TimelineCardVM> renderer = 
+            (ListCellRenderer<? super ViewTimelineResponse.TimelineCardVM>) list.getCellRenderer();
+        testList.setCellRenderer(renderer);
+        if (list.getMouseListeners().length > 0) {
+            testList.addMouseListener(list.getMouseListeners()[0]);
+        }
+        
+        // Click on the test list - should not process because index >= size
         MouseEvent invalidClick = new MouseEvent(
-            list, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(),
-            0, 0, 0, 1, false
+            testList, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(),
+            0, 10, 10, 1, false
         );
-        // locationToIndex with invalid point should return -1
-        list.dispatchEvent(invalidClick);
+        testList.dispatchEvent(invalidClick);
         // Should handle gracefully - state should not change
         assertEquals(initialState, viewManagerModel.getState());
     }
@@ -618,14 +646,43 @@ class ViewTimelineViewTest {
         response.getItems().add(card);
         triggerPropertyChange(response);
         
-        JList<?> list = getList();
-        // Create a click event that would result in negative index
-        MouseEvent negativeClick = new MouseEvent(
-            list, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(),
-            0, -1000, -1000, 1, false
-        );
+        // Reset state to a known value
+        viewManagerModel.setState("timeline");
+        viewManagerModel.firePropertyChange();
         String initialState = viewManagerModel.getState();
-        list.dispatchEvent(negativeClick);
+        assertEquals("timeline", initialState); // Ensure we start with timeline
+        
+        @SuppressWarnings("unchecked")
+        JList<ViewTimelineResponse.TimelineCardVM> list = (JList<ViewTimelineResponse.TimelineCardVM>) getList();
+        DefaultListModel<ViewTimelineResponse.TimelineCardVM> listModel = 
+            (DefaultListModel<ViewTimelineResponse.TimelineCardVM>) list.getModel();
+        
+        // Create a custom JList that returns a negative index by overriding locationToIndex
+        class TestJListNegative extends JList<ViewTimelineResponse.TimelineCardVM> {
+            TestJListNegative(DefaultListModel<ViewTimelineResponse.TimelineCardVM> model) {
+                super(model);
+            }
+            @Override
+            public int locationToIndex(Point location) {
+                // Return -1 to test negative index check
+                return -1;
+            }
+        }
+        TestJListNegative testList = new TestJListNegative(listModel);
+        @SuppressWarnings("unchecked")
+        ListCellRenderer<? super ViewTimelineResponse.TimelineCardVM> renderer = 
+            (ListCellRenderer<? super ViewTimelineResponse.TimelineCardVM>) list.getCellRenderer();
+        testList.setCellRenderer(renderer);
+        if (list.getMouseListeners().length > 0) {
+            testList.addMouseListener(list.getMouseListeners()[0]);
+        }
+        
+        // Click on the test list - should not process because index < 0
+        MouseEvent negativeClick = new MouseEvent(
+            testList, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(),
+            0, 10, 10, 1, false
+        );
+        testList.dispatchEvent(negativeClick);
         // Should handle gracefully (index < 0 check) - state should not change
         assertEquals(initialState, viewManagerModel.getState());
     }

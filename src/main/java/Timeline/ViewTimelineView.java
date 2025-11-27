@@ -14,8 +14,14 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 
 public class ViewTimelineView extends JPanel implements PropertyChangeListener {
+    private static final String TIMELINE_PROPERTY = "timeline";
+    private static final String ERROR_TITLE = "Error";
+    private static final String NOTES_VIEW_NAME = "notes";
+    private static final String FLASHCARDS_VIEW_NAME = "flashcards";
+    private static final String QUIZ_VIEW_NAME = "quiz";
+    private static final String NON_DIGIT_PATTERN = "\\D+";
+    
     private final ViewTimelineViewModel vm;
-    private final TimelineController controller;
     private final ViewManagerModel viewManagerModel;
     private final NotesView notesView;
     private final FlashcardsView flashcardsView;
@@ -28,7 +34,6 @@ public class ViewTimelineView extends JPanel implements PropertyChangeListener {
                            ViewManagerModel viewManagerModel, NotesView notesView, 
                            FlashcardsView flashcardsView, QuizView quizView) {
         this.vm = vm;
-        this.controller = controller;
         this.viewManagerModel = viewManagerModel;
         this.notesView = notesView;
         this.flashcardsView = flashcardsView;
@@ -36,16 +41,16 @@ public class ViewTimelineView extends JPanel implements PropertyChangeListener {
         this.vm.addPropertyChangeListener(this);
         
         // Set up back buttons to return to timeline
-        notesView.getBackButton().addActionListener(_ -> {
-            viewManagerModel.setState("timeline");
+        notesView.getBackButton().addActionListener(e -> {
+            viewManagerModel.setState(TIMELINE_PROPERTY);
             viewManagerModel.firePropertyChange();
         });
-        flashcardsView.getBackButton().addActionListener(_ -> {
-            viewManagerModel.setState("timeline");
+        flashcardsView.getBackButton().addActionListener(e -> {
+            viewManagerModel.setState(TIMELINE_PROPERTY);
             viewManagerModel.firePropertyChange();
         });
-        quizView.getBackButton().addActionListener(_ -> {
-            viewManagerModel.setState("timeline");
+        quizView.getBackButton().addActionListener(e -> {
+            viewManagerModel.setState(TIMELINE_PROPERTY);
             viewManagerModel.firePropertyChange();
         });
 
@@ -66,7 +71,7 @@ public class ViewTimelineView extends JPanel implements PropertyChangeListener {
                 if (index >= 0 && index < listModel.getSize()) {
                     ViewTimelineResponse.TimelineCardVM card = listModel.getElementAt(index);
                     // Verify contentId is set
-                    if (card.contentId == null) {
+                    if (card.getContentId() == null) {
                         // Try to get from viewModel if missing
                         List<ViewTimelineResponse.TimelineCardVM> items = vm.getItems();
                         if (index < items.size()) {
@@ -74,7 +79,7 @@ public class ViewTimelineView extends JPanel implements PropertyChangeListener {
                         }
                     }
                     // Open on double-click or single-click
-                    if (e.getClickCount() >= 1 && card.contentId != null) {
+                    if (e.getClickCount() >= 1 && card.getContentId() != null) {
                         openStudyMaterial(card);
                     }
                 }
@@ -87,14 +92,15 @@ public class ViewTimelineView extends JPanel implements PropertyChangeListener {
 
         emptyLabel.setVisible(false);
 
-        refreshBtn.addActionListener(_ -> {
-            if (vm.getCourseId() != null) controller.open(vm.getCourseId());
+        final TimelineController controllerRef = controller;
+        refreshBtn.addActionListener(e -> {
+            if (vm.getCourseId() != null) controllerRef.open(vm.getCourseId());
         });
     }
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        if (!"timeline".equals(evt.getPropertyName())) return;
+        if (!TIMELINE_PROPERTY.equals(evt.getPropertyName())) return;
 
         listModel.clear();
         for (ViewTimelineResponse.TimelineCardVM card : vm.getItems()) {
@@ -130,12 +136,12 @@ public class ViewTimelineView extends JPanel implements PropertyChangeListener {
                 ViewTimelineResponse.TimelineCardVM value,
                 int index, boolean isSelected, boolean cellHasFocus) {
 
-            title.setText(value.title != null ? value.title : value.type);
-            String sub = (value.subtitle == null || value.subtitle.isEmpty())
-                    ? (value.snippet == null ? "" : value.snippet)
-                    : value.subtitle;
+            title.setText(value.getTitle() != null ? value.getTitle() : value.getType());
+            String sub = (value.getSubtitle() == null || value.getSubtitle().isEmpty())
+                    ? (value.getSnippet() == null ? "" : value.getSnippet())
+                    : value.getSubtitle();
             subtitle.setText(sub);
-            time.setText(value.time != null ? value.time : "");
+            time.setText(value.getTime() != null ? value.getTime() : "");
 
             setBackground(isSelected ? list.getSelectionBackground() : list.getBackground());
             setForeground(isSelected ? list.getSelectionForeground() : list.getForeground());
@@ -148,27 +154,27 @@ public class ViewTimelineView extends JPanel implements PropertyChangeListener {
      * @param card The timeline card representing the study material
      */
     private void openStudyMaterial(ViewTimelineResponse.TimelineCardVM card) {
-        if (card.contentId == null) {
+        if (card.getContentId() == null) {
             JOptionPane.showMessageDialog(this,
                     "Unable to open: content ID is missing.",
-                    "Error",
+                    ERROR_TITLE,
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        if (card.type == null) {
+        if (card.getType() == null) {
             JOptionPane.showMessageDialog(this,
                     "Unable to open: content type is missing.",
-                    "Error",
+                    ERROR_TITLE,
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        switch (card.type) {
+        switch (card.getType()) {
             case "NOTES":
                 // Display notes in NotesView
-                notesView.displayNotes(card.contentId, card.title, card.snippet);
-                viewManagerModel.setState("notes");
+                notesView.displayNotes(card.getContentId(), card.getTitle(), card.getSnippet());
+                viewManagerModel.setState(NOTES_VIEW_NAME);
                 viewManagerModel.firePropertyChange();
                 break;
                 
@@ -176,9 +182,9 @@ public class ViewTimelineView extends JPanel implements PropertyChangeListener {
                 // Display flashcards in FlashcardsView
                 // Extract number of cards from subtitle (e.g., "20 cards")
                 int numCards = 0;
-                if (card.subtitle != null && !card.subtitle.isEmpty()) {
+                if (card.getSubtitle() != null && !card.getSubtitle().isEmpty()) {
                     try {
-                        String numStr = card.subtitle.replaceAll("[^0-9]", "");
+                        String numStr = card.getSubtitle().replaceAll(NON_DIGIT_PATTERN, "");
                         if (!numStr.isEmpty()) {
                             numCards = Integer.parseInt(numStr);
                         }
@@ -186,8 +192,8 @@ public class ViewTimelineView extends JPanel implements PropertyChangeListener {
                         // Use default
                     }
                 }
-                flashcardsView.displayFlashcards(card.contentId, numCards);
-                viewManagerModel.setState("flashcards");
+                flashcardsView.displayFlashcards(card.getContentId(), numCards);
+                viewManagerModel.setState(FLASHCARDS_VIEW_NAME);
                 viewManagerModel.firePropertyChange();
                 break;
                 
@@ -196,39 +202,39 @@ public class ViewTimelineView extends JPanel implements PropertyChangeListener {
                 // Extract number of questions and score from subtitle
                 int numQuestions = 0;
                 Double score = null;
-                if (card.subtitle != null && !card.subtitle.isEmpty()) {
-                    if (card.subtitle.startsWith("Score")) {
+                if (card.getSubtitle() != null && !card.getSubtitle().isEmpty()) {
+                    if (card.getSubtitle().startsWith("Score")) {
                         // Format: "Score 14.0/15"
-                        String[] parts = card.subtitle.replace("Score ", "").split("/");
+                        String[] parts = card.getSubtitle().replace("Score ", "").split("/");
                         if (parts.length == 2) {
                             try {
                                 score = Double.parseDouble(parts[0].trim());
                                 numQuestions = Integer.parseInt(parts[1].trim());
                             } catch (NumberFormatException e) {
                                 // Try to extract just number of questions
-                                String numStr = card.subtitle.replaceAll("[^0-9]", "");
+                                String numStr = card.getSubtitle().replaceAll(NON_DIGIT_PATTERN, "");
                                 if (!numStr.isEmpty()) {
                                     numQuestions = Integer.parseInt(numStr);
                                 }
                             }
                         }
-                    } else if (card.subtitle.contains("questions")) {
+                    } else if (card.getSubtitle().contains("questions")) {
                         // Format: "15 questions"
-                        String numStr = card.subtitle.replaceAll("[^0-9]", "");
+                        String numStr = card.getSubtitle().replaceAll(NON_DIGIT_PATTERN, "");
                         if (!numStr.isEmpty()) {
                             numQuestions = Integer.parseInt(numStr);
                         }
                     }
                 }
-                quizView.displayQuiz(card.contentId, numQuestions, score);
-                viewManagerModel.setState("quiz");
+                quizView.displayQuiz(card.getContentId(), numQuestions, score);
+                viewManagerModel.setState(QUIZ_VIEW_NAME);
                 viewManagerModel.firePropertyChange();
                 break;
                 
             default:
                 JOptionPane.showMessageDialog(this,
-                        "Unknown content type: " + card.type,
-                        "Error",
+                        "Unknown content type: " + card.getType(),
+                        ERROR_TITLE,
                         JOptionPane.ERROR_MESSAGE);
         }
     }

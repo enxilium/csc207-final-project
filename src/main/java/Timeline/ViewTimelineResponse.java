@@ -18,14 +18,34 @@ public class ViewTimelineResponse {
     public List<TimelineCardVM> getItems() { return items; }
     public void setItems(List<TimelineCardVM> items) { this.items = items; }
 
-    public static class TimelineCardVM {
-        public String time;
-        public String icon;
-        public String type;
-        public String title;
-        public String subtitle;
-        public String snippet;
-        public java.util.UUID contentId;
-        public String eventId;
+    public class TimelineCardVM {
+        private String time;
+        private String icon;
+        private String type;
+        private String title;
+        private String subtitle;
+        private String snippet;
+        private UUID contentId;
+        private String eventId;
+
+        // Getters
+        public String getTime() { return time; }
+        public String getIcon() { return icon; }
+        public String getType() { return type; }
+        public String getTitle() { return title; }
+        public String getSubtitle() { return subtitle; }
+        public String getSnippet() { return snippet; }
+        public UUID getContentId() { return contentId; }
+        public String getEventId() { return eventId; }
+
+        // Setters
+        public void setTime(String time) { this.time = time; }
+        public void setIcon(String icon) { this.icon = icon; }
+        public void setType(String type) { this.type = type; }
+        public void setTitle(String title) { this.title = title; }
+        public void setSubtitle(String subtitle) { this.subtitle = subtitle; }
+        public void setSnippet(String snippet) { this.snippet = snippet; }
+        public void setContentId(UUID contentId) { this.contentId = contentId; }
+        public void setEventId(String eventId) { this.eventId = eventId; }
     }
 }

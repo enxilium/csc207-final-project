@@ -6,4 +6,3 @@ public enum TimelineEventType {
     QUIZ_GENERATED,
     QUIZ_SUBMITTED
 }
-

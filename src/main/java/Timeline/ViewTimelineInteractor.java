@@ -4,7 +4,6 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class ViewTimelineInteractor implements ViewTimelineInputBoundary {
     private final ITimelineRepository timelineRepo;
@@ -28,41 +27,45 @@ public class ViewTimelineInteractor implements ViewTimelineInputBoundary {
 
         ViewTimelineResponse resp = new ViewTimelineResponse();
         resp.setCourseId(courseId);
-        resp.setItems(events.stream().map(this::toCard).collect(Collectors.toList()));
+        resp.setItems(events.stream().map(e -> toCard(e, resp)).toList());
         resp.setEmpty(resp.getItems().isEmpty());
 
         presenter.present(resp);
     }
 
-    private ViewTimelineResponse.TimelineCardVM toCard(TimelineEvent e) {
-        ViewTimelineResponse.TimelineCardVM vm = new ViewTimelineResponse.TimelineCardVM();
-        vm.time = FMT.format(e.getOccurredAt().atZone(ZoneId.systemDefault()));
-        vm.contentId = e.getContentId();
-        vm.eventId = e.getId().toString();
+    private ViewTimelineResponse.TimelineCardVM toCard(TimelineEvent e, ViewTimelineResponse response) {
+        ViewTimelineResponse.TimelineCardVM vm = response.new TimelineCardVM();
+        vm.setTime(FMT.format(e.getOccurredAt().atZone(ZoneId.systemDefault())));
+        vm.setContentId(e.getContentId());
+        vm.setEventId(e.getId().toString());
 
         switch (e.getType()) {
             case NOTES_GENERATED:
-                vm.icon = "notes"; vm.type = "NOTES";
-                vm.title = (e.getTitle() == null || e.getTitle().isEmpty() ? "Notes" : e.getTitle());
-                vm.snippet = e.getSnippet();
+                vm.setIcon("notes");
+                vm.setType("NOTES");
+                vm.setTitle(e.getTitle() == null || e.getTitle().isEmpty() ? "Notes" : e.getTitle());
+                vm.setSnippet(e.getSnippet());
                 break;
             case FLASHCARDS_GENERATED:
-                vm.icon = "cards"; vm.type = "FLASHCARDS";
-                vm.title = "Flashcards";
-                vm.subtitle = (e.getNumCards() == null ? "" : e.getNumCards() + " cards");
+                vm.setIcon("cards");
+                vm.setType("FLASHCARDS");
+                vm.setTitle("Flashcards");
+                vm.setSubtitle(e.getNumCards() == null ? "" : e.getNumCards() + " cards");
                 break;
             case QUIZ_GENERATED:
-                vm.icon = "quiz"; vm.type = "QUIZ";
-                vm.title = "Quiz";
-                vm.subtitle = (e.getNumQuestions() == null ? "" : e.getNumQuestions() + " questions");
+                vm.setIcon("quiz");
+                vm.setType("QUIZ");
+                vm.setTitle("Quiz");
+                vm.setSubtitle(e.getNumQuestions() == null ? "" : e.getNumQuestions() + " questions");
                 break;
             case QUIZ_SUBMITTED:
-                vm.icon = "score"; vm.type = "QUIZ";
-                vm.title = "Quiz — Submitted";
+                vm.setIcon("score");
+                vm.setType("QUIZ");
+                vm.setTitle("Quiz — Submitted");
                 if (e.getNumQuestions() != null && e.getScore() != null) {
-                    vm.subtitle = "Score " + e.getScore() + "/" + e.getNumQuestions();
+                    vm.setSubtitle("Score " + e.getScore() + "/" + e.getNumQuestions());
                 } else {
-                    vm.subtitle = "";
+                    vm.setSubtitle("");
                 }
                 break;
         }

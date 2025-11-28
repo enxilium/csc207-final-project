@@ -1,12 +1,12 @@
 package interface_adapters.lecturenotes;
 
+import Timeline.TimelineLogger;
+import Timeline.InMemoryTimelineRepository;
 import interface_adapters.ViewManagerModel;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import usecases.lecturenotes.GenerateLectureNotesOutputData;
 
-import java.time.LocalDateTime;
-
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for GenerateLectureNotesPresenter.
@@ -30,16 +30,16 @@ public class GenerateLectureNotesPresenterTest {
         initialState.setLoading(true);
         viewModel.setState(initialState);
 
+        TimelineLogger timelineLogger = new TimelineLogger(new InMemoryTimelineRepository());
         GenerateLectureNotesPresenter presenter =
-                new GenerateLectureNotesPresenter(viewModel, viewManagerModel);
+                new GenerateLectureNotesPresenter(viewModel, viewManagerModel, timelineLogger);
 
         // Output data coming from the use case
         GenerateLectureNotesOutputData outputData =
                 new GenerateLectureNotesOutputData(
                         "CSC207",
                         "Recursion",
-                        "Generated notes for recursion",
-                        LocalDateTime.now()
+                        "Generated notes for recursion"
                 );
 
         // Act: call the presenter
@@ -54,7 +54,7 @@ public class GenerateLectureNotesPresenterTest {
         assertFalse(updatedState.isLoading());
 
         // Assert: view manager switches to the lecture-notes view
-        assertEquals(LectureNotesViewModel.VIEW_NAME, viewManagerModel.getState());
+        assertEquals(viewModel.getViewName(), viewManagerModel.getState());
     }
 
     @Test
@@ -71,8 +71,9 @@ public class GenerateLectureNotesPresenterTest {
         initialState.setLoading(true);
         viewModel.setState(initialState);
 
+        TimelineLogger timelineLogger = new TimelineLogger(new InMemoryTimelineRepository());
         GenerateLectureNotesPresenter presenter =
-                new GenerateLectureNotesPresenter(viewModel, viewManagerModel);
+                new GenerateLectureNotesPresenter(viewModel, viewManagerModel, timelineLogger);
 
         String errorMessage = "Course not found";
 
@@ -87,6 +88,6 @@ public class GenerateLectureNotesPresenterTest {
         // We do NOT expect the active view to change here,
         // so we simply check that the state is not equal to the lecture notes view name.
         // (If your design expects a switch, you can change this assertion.)
-        assertNotEquals(LectureNotesViewModel.VIEW_NAME, viewManagerModel.getState());
+        assertNotEquals(viewModel.getViewName(), viewManagerModel.getState());
     }
 }

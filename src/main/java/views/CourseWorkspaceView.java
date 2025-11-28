@@ -29,6 +29,7 @@ public class CourseWorkspaceView extends JPanel implements ActionListener, Prope
     private ViewManager viewManager = null;
     private CourseWorkspaceViewModel courseWorkspaceViewModel = null;
     private Runnable openLectureNotesAction = null;
+    private Runnable openTimelineAction = null;
     private JButton flashcardButton;
     private GenerateFlashcardsController flashcardsController;
 
@@ -128,6 +129,12 @@ public class CourseWorkspaceView extends JPanel implements ActionListener, Prope
             }
         });
 
+        //open history/timeline
+        JButton historyButton = new JButton("History");
+        historyButton.setPreferredSize(new Dimension(120, 30));
+        bottomPanel.add(historyButton);
+        historyButton.addActionListener(e -> { if (openTimelineAction != null) openTimelineAction.run(); });
+
         //open test
         JButton testButton = new JButton("Open Tests");
         flashCardButton.setPreferredSize(new Dimension(140, 30));
@@ -204,6 +211,10 @@ public class CourseWorkspaceView extends JPanel implements ActionListener, Prope
 
     public void setFlashcardsController(GenerateFlashcardsController flashcardsController) {
         this.flashcardsController = flashcardsController;
+    }
+
+    public void setOpenTimelineAction(Runnable action) {
+        this.openTimelineAction = action;
     }
 }
 

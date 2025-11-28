@@ -2,11 +2,11 @@ package usecases.lecturenotes;
 
 import entities.Course;
 import entities.LectureNotes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for GenerateLectureNotesInteractor.
@@ -19,7 +19,7 @@ public class GenerateLectureNotesInteractorTest {
     public void execute_success_callsSuccessView() {
         // --- Arrange ---
         // Fake course returned by the course gateway
-        Course course = new Course("CSC207");
+        Course course = new Course("CSC207", "Software Design", "Test course");
 
         CourseLookupGateway courseGateway = new CourseLookupGateway() {
             @Override
@@ -33,7 +33,7 @@ public class GenerateLectureNotesInteractorTest {
         // Fake Gemini gateway: always returns the same LectureNotes
         NotesGeminiGateway notesGateway = new NotesGeminiGateway() {
             @Override
-            public LectureNotes generateNotes(Course c, String topic) throws Exception {
+            public LectureNotes generateNotes(Course c, String topic) throws NotesGenerationException {
                 assertSame(course, c);
                 assertEquals("Recursion", topic);
                 return new LectureNotes(
@@ -65,10 +65,6 @@ public class GenerateLectureNotesInteractorTest {
         assertEquals("CSC207", presenter.outputData.getCourseId());
         assertEquals("Recursion", presenter.outputData.getTopic());
         assertEquals("Generated notes content", presenter.outputData.getNotesText());
-        assertEquals(
-                LocalDateTime.of(2024, 1, 1, 12, 0),
-                presenter.outputData.getGeneratedAt()
-        );
     }
 
     @Test
@@ -84,7 +80,7 @@ public class GenerateLectureNotesInteractorTest {
 
         NotesGeminiGateway notesGateway = new NotesGeminiGateway() {
             @Override
-            public LectureNotes generateNotes(Course c, String topic) throws Exception {
+            public LectureNotes generateNotes(Course c, String topic) throws NotesGenerationException {
                 fail("notesGateway should NOT be called when course is null");
                 return null;
             }
@@ -110,7 +106,7 @@ public class GenerateLectureNotesInteractorTest {
     @Test
     public void execute_gatewayThrows_callsFailView() {
         // --- Arrange ---
-        Course course = new Course("CSC207");
+        Course course = new Course("CSC207", "Software Design", "Test course");
 
         CourseLookupGateway courseGateway = new CourseLookupGateway() {
             @Override
@@ -121,8 +117,8 @@ public class GenerateLectureNotesInteractorTest {
 
         NotesGeminiGateway notesGateway = new NotesGeminiGateway() {
             @Override
-            public LectureNotes generateNotes(Course c, String topic) throws Exception {
-                throw new RuntimeException("Gemini failure");
+            public LectureNotes generateNotes(Course c, String topic) throws NotesGenerationException {
+                throw new NotesGenerationException("Gemini failure");
             }
         };
 

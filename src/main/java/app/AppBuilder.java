@@ -24,6 +24,9 @@ import usecases.workspace.*;
 
 import views.*;
 
+import Timeline.*;
+import java.util.UUID;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -36,7 +39,17 @@ public class AppBuilder {
 
     // --- Data Access Objects ---
     private LocalCourseRepository courseDAO = new LocalCourseRepository();
-    private final GeminiApiDataAccess geminiDAO = new GeminiApiDataAccess();
+    private GeminiApiDataAccess geminiDAO;
+    
+    /**
+     * Lazy initialization of GeminiApiDataAccess to ensure API key is set first.
+     */
+    private GeminiApiDataAccess getGeminiDAO() {
+        if (geminiDAO == null) {
+            geminiDAO = new GeminiApiDataAccess();
+        }
+        return geminiDAO;
+    }
 
     // --- ViewModels and Views (stored for wiring) ---
     private MockTestViewModel mockTestViewModel;
@@ -65,6 +78,13 @@ public class AppBuilder {
     private FlashcardViewModel flashcardViewModel;
     private GenerateFlashcardsView generateFlashcardsView;
     private FlashcardDisplayView flashcardDisplayView;
+
+    // === IAIN: Timeline view models & views ===
+    private ViewTimelineViewModel timelineViewModel;
+    private ViewTimelineView timelineView;
+    private TimelineController timelineController;
+    private final ITimelineRepository timelineRepository = new Timeline.FileTimelineRepository();
+    private final TimelineLogger timelineLogger = new TimelineLogger(timelineRepository);
 
     public AppBuilder() {
         PDFFile dummyPdf = new PDFFile("test.pdf");
@@ -96,8 +116,8 @@ public class AppBuilder {
     }
 
     public AppBuilder addMockTestGenerationUseCase() {
-        MockTestPresenter presenter = new MockTestPresenter(mockTestViewModel, viewManagerModel, loadingViewModel);
-        MockTestGenerationInteractor interactor = new MockTestGenerationInteractor(courseDAO, geminiDAO, presenter);
+        MockTestPresenter presenter = new MockTestPresenter(mockTestViewModel, viewManagerModel, loadingViewModel, timelineLogger);
+        MockTestGenerationInteractor interactor = new MockTestGenerationInteractor(courseDAO, getGeminiDAO(), presenter);
         MockTestController controller = new MockTestController(interactor);
         this.courseWorkspaceView.setMockTestController(controller);
 
@@ -107,16 +127,16 @@ public class AppBuilder {
     public AppBuilder addEvaluateTestUseCase() {
         // The Presenter for the evaluation results view
         EvaluateTestPresenter evalPresenter = new EvaluateTestPresenter(evaluateTestViewModel, loadingViewModel,
-                courseDashboardViewModel, viewManagerModel);
+                courseDashboardViewModel, viewManagerModel, timelineLogger, mockTestViewModel);
 
         // The Interactor for the evaluation use case. It correctly uses the DAOs.
-        EvaluateTestInteractor evalInteractor = new EvaluateTestInteractor(courseDAO, geminiDAO, evalPresenter);
+        EvaluateTestInteractor evalInteractor = new EvaluateTestInteractor(courseDAO, getGeminiDAO(), evalPresenter);
 
         // The Controller that the WriteTestView will use to trigger the evaluation.
         EvaluateTestController evalController = new EvaluateTestController(evalInteractor);
 
         // The Presenter for the WriteTestView's navigation (next/prev question).
-        MockTestPresenter mockTestPresenter = new MockTestPresenter(mockTestViewModel, viewManagerModel, loadingViewModel);
+        MockTestPresenter mockTestPresenter = new MockTestPresenter(mockTestViewModel, viewManagerModel, loadingViewModel, timelineLogger);
 
         // Inject both the controller (for submitting) and the presenter (for navigation) into the WriteTestView.
         writeTestView.setController(evalController);
@@ -141,7 +161,7 @@ public class AppBuilder {
         // 2) presenter
         interface_adapters.lecturenotes.GenerateLectureNotesPresenter presenter =
                 new interface_adapters.lecturenotes.GenerateLectureNotesPresenter(
-                        this.lectureNotesViewModel, this.viewManagerModel);
+                        this.lectureNotesViewModel, this.viewManagerModel, this.timelineLogger);
 
         // 3) interactor
         usecases.lecturenotes.GenerateLectureNotesInteractor interactor =
@@ -263,6 +283,35 @@ public class AppBuilder {
             this.viewManagerModel.firePropertyChange();
         });
 
+        // Open Timeline/History from the workspace; convert course ID to UUID and navigate.
+        // Initialize Timeline components lazily if not already initialized
+        this.courseWorkspaceView.setOpenTimelineAction(() -> {
+            // Initialize Timeline if not already done (lazy initialization)
+            if (this.timelineViewModel == null) {
+                this.addTimelineView();
+            }
+            
+            // get currently selected course from the workspace VM
+            var wsState = this.courseWorkspaceViewModel.getState();
+            var course = (wsState == null) ? null : wsState.getCourse();
+            String courseId = (course == null) ? "" : course.getCourseId();
+
+            if (courseId != null && !courseId.isEmpty()) {
+                // Convert String course ID to UUID using CourseIdMapper
+                UUID courseUuid = Timeline.CourseIdMapper.getUuidForCourseId(courseId);
+                
+                // Set the course ID in the Timeline ViewModel
+                this.timelineViewModel.setCourseId(courseUuid);
+                
+                // Load the timeline for this course
+                this.timelineController.open(courseUuid);
+                
+                // Navigate to Timeline view
+                this.viewManagerModel.setState(this.timelineViewModel.getViewName());
+                this.viewManagerModel.firePropertyChange();
+            }
+        });
+
         this.courseCreateView.setCourseDashboardController(courseDashboardController);
         this.courseCreateView.setCourseWorkspaceController(courseController);
 
@@ -300,7 +349,7 @@ public class AppBuilder {
 
         // Create the presenter
         GenerateFlashcardsPresenter presenter =
-                new GenerateFlashcardsPresenter(flashcardViewModel, viewManagerModel);
+                new GenerateFlashcardsPresenter(flashcardViewModel, viewManagerModel, timelineLogger);
 
         // Create the interactor
         GenerateFlashcardsInteractor interactor =
@@ -315,6 +364,79 @@ public class AppBuilder {
         courseWorkspaceView.setFlashcardsController(controller);
 
         return this;
+    }
+
+    // === TIMELINE: Timeline methods ===
+
+    /**
+     * Adds the Timeline view and its sub-views (Notes, Flashcards, Quiz) to the application.
+     * @return this AppBuilder for method chaining
+     */
+    public AppBuilder addTimelineView() {
+        // Create Timeline ViewModel
+        this.timelineViewModel = new ViewTimelineViewModel();
+
+        // Ensure required ViewModels exist (they should be created by other add methods)
+        if (this.lectureNotesViewModel == null) {
+            this.lectureNotesViewModel = new interface_adapters.lecturenotes.LectureNotesViewModel();
+        }
+        if (this.flashcardViewModel == null) {
+            this.flashcardViewModel = new FlashcardViewModel();
+        }
+        if (this.evaluateTestViewModel == null) {
+            this.evaluateTestViewModel = new EvaluateTestViewModel();
+        }
+        if (this.mockTestViewModel == null) {
+            this.mockTestViewModel = new MockTestViewModel();
+        }
+
+        // Create the presenter
+        ViewTimelineSwingPresenter presenter = new ViewTimelineSwingPresenter(timelineViewModel);
+
+        // Create the interactor
+        ViewTimelineInteractor interactor = new ViewTimelineInteractor(timelineRepository, presenter);
+
+        // Create the controller
+        this.timelineController = new TimelineController(interactor);
+
+        // Create Timeline View - pass ViewModels instead of simple views
+        this.timelineView = new ViewTimelineView(
+            timelineViewModel,
+            timelineController,
+            viewManagerModel,
+            lectureNotesViewModel,
+            flashcardViewModel,
+            evaluateTestViewModel,
+            mockTestViewModel
+        );
+
+        // Add Timeline view to cardPanel
+        cardPanel.add(timelineView, timelineViewModel.getViewName());
+
+        return this;
+    }
+
+    /**
+     * Wires up the Timeline use case with all necessary dependencies.
+     * This method is called after addTimelineView() to ensure proper initialization order.
+     * Currently, all wiring is done in addTimelineView(), but this method exists for consistency
+     * with other features and potential future enhancements.
+     * @return this AppBuilder for method chaining
+     */
+    public AppBuilder addTimelineUseCase() {
+        // All wiring is already done in addTimelineView()
+        // This method exists for consistency with other features
+        // and can be used for additional wiring if needed in the future
+
+        return this;
+    }
+
+    /**
+     * Gets the TimelineLogger instance for other use cases to log timeline events.
+     * @return The TimelineLogger instance
+     */
+    public TimelineLogger getTimelineLogger() {
+        return timelineLogger;
     }
 
     public JFrame build() {

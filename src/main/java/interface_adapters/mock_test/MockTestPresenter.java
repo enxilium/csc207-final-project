@@ -1,23 +1,28 @@
 package interface_adapters.mock_test;
 
+import Timeline.CourseIdMapper;
+import Timeline.TimelineLogger;
 import interface_adapters.LoadingViewModel;
 import interface_adapters.ViewManagerModel;
 import usecases.mock_test_generation.MockTestGenerationOutputBoundary;
 import usecases.mock_test_generation.MockTestGenerationOutputData;
 
 import javax.swing.SwingUtilities;
+import java.util.UUID;
 
 public class MockTestPresenter implements MockTestGenerationOutputBoundary {
 
     private final MockTestViewModel mockTestViewModel;
     private final LoadingViewModel loadingViewModel;
     private final ViewManagerModel viewManagerModel;
+    private final TimelineLogger timelineLogger;
 
     public MockTestPresenter(MockTestViewModel mockTestViewModel, ViewManagerModel viewManagerModel,
-                             LoadingViewModel loadingViewModel) {
+                             LoadingViewModel loadingViewModel, TimelineLogger timelineLogger) {
         this.mockTestViewModel = mockTestViewModel;
         this.viewManagerModel = viewManagerModel;
         this.loadingViewModel = loadingViewModel;
+        this.timelineLogger = timelineLogger;
     }
 
     public void presentTest(MockTestGenerationOutputData mockTestGenerationOutputData) {
@@ -38,6 +43,21 @@ public class MockTestPresenter implements MockTestGenerationOutputBoundary {
             // Switch to mockTest view
             viewManagerModel.setState(mockTestViewModel.getViewName());
             viewManagerModel.firePropertyChange();
+
+            // Log to Timeline
+            if (timelineLogger != null && mockTestGenerationOutputData.getCourseId() != null 
+                && !mockTestGenerationOutputData.getCourseId().isEmpty()) {
+                try {
+                    UUID courseUuid = CourseIdMapper.getUuidForCourseId(mockTestGenerationOutputData.getCourseId());
+                    UUID contentId = UUID.randomUUID(); // Generate a unique content ID for this test
+                    int numQuestions = mockTestGenerationOutputData.getQuestions() != null 
+                        ? mockTestGenerationOutputData.getQuestions().size() : 0;
+                    timelineLogger.logQuizGenerated(courseUuid, contentId, numQuestions, mockTestGenerationOutputData);
+                } catch (Exception e) {
+                    // Log error but don't break the flow
+                    System.err.println("Failed to log test to timeline: " + e.getMessage());
+                }
+            }
         });
     }
 

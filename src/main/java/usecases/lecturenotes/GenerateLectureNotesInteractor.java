@@ -25,9 +25,10 @@ public class GenerateLectureNotesInteractor implements GenerateLectureNotesInput
 
         Course course = courseGateway.getCourseById(courseId);
 
-        // Fallback: allow ad-hoc generation even if not in the repository yet.
+        // If course not found, fail early
         if (course == null) {
-            course = new Course(courseId, courseId, "ad-hoc");
+            presenter.prepareFailView("Course not found: " + courseId);
+            return;
         }
 
         try {

@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -273,7 +274,7 @@ class ViewTimelineInteractorTest {
         // Verify all types are present
         List<String> types = response.getItems().stream()
                 .map(ViewTimelineResponse.TimelineCardVM::getType)
-                .toList();
+                .collect(Collectors.toList());
         assertTrue(types.contains("NOTES"));
         assertTrue(types.contains("FLASHCARDS"));
         assertTrue(types.contains("QUIZ"));

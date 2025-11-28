@@ -115,7 +115,7 @@ class ViewTimelineResponseTest {
         ViewTimelineResponse response = new ViewTimelineResponse();
         ViewTimelineResponse.TimelineCardVM card = response.new TimelineCardVM();
         UUID contentId = UUID.randomUUID();
-        
+
         // Test all setters and getters
         card.setTime("Jan 1, 12:00");
         card.setIcon("notes");
@@ -125,7 +125,7 @@ class ViewTimelineResponseTest {
         card.setSnippet("Test snippet");
         card.setContentId(contentId);
         card.setEventId("event-id");
-        
+
         assertEquals("Jan 1, 12:00", card.getTime());
         assertEquals("notes", card.getIcon());
         assertEquals("NOTES", card.getType());

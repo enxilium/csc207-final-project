@@ -89,6 +89,49 @@ class TimelineEventTest {
         TimelineEvent submitted = new TimelineEvent(courseId, contentId, TimelineEventType.QUIZ_SUBMITTED);
         assertEquals(TimelineEventType.QUIZ_SUBMITTED, submitted.getType());
     }
+
+    @Test
+    void testFullContentSetters() {
+        UUID courseId = UUID.randomUUID();
+        UUID contentId = UUID.randomUUID();
+        TimelineEvent event = new TimelineEvent(courseId, contentId, TimelineEventType.NOTES_GENERATED);
+
+        // Test setFullNotesText and getFullNotesText
+        event.setFullNotesText("Full notes content");
+        assertEquals("Full notes content", event.getFullNotesText());
+
+        // Test setFlashcardData and getFlashcardData
+        event.setFlashcardData("{\"courseName\":\"Test\",\"flashcards\":[]}");
+        assertEquals("{\"courseName\":\"Test\",\"flashcards\":[]}", event.getFlashcardData());
+
+        // Test setTestData and getTestData (line 64)
+        event.setTestData("{\"questions\":[\"Q1\"],\"answers\":[\"A1\"]}");
+        assertEquals("{\"questions\":[\"Q1\"],\"answers\":[\"A1\"]}", event.getTestData());
+
+        // Test setEvaluationData and getEvaluationData (line 67)
+        event.setEvaluationData("{\"score\":10,\"feedback\":[\"Good\"]}");
+        assertEquals("{\"score\":10,\"feedback\":[\"Good\"]}", event.getEvaluationData());
+    }
+
+    @Test
+    void testFullContentSettersWithNull() {
+        UUID courseId = UUID.randomUUID();
+        UUID contentId = UUID.randomUUID();
+        TimelineEvent event = new TimelineEvent(courseId, contentId, TimelineEventType.NOTES_GENERATED);
+
+        // Test setters with null values
+        event.setFullNotesText(null);
+        assertNull(event.getFullNotesText());
+
+        event.setFlashcardData(null);
+        assertNull(event.getFlashcardData());
+
+        event.setTestData(null);
+        assertNull(event.getTestData());
+
+        event.setEvaluationData(null);
+        assertNull(event.getEvaluationData());
+    }
 }
 
 

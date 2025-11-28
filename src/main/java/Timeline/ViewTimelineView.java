@@ -1,9 +1,21 @@
 package Timeline;
 
+import com.google.gson.Gson;
+import entities.FlashcardSet;
 import interface_adapters.ViewManagerModel;
-import views.NotesView;
-import views.FlashcardsView;
-import views.QuizView;
+import interface_adapters.lecturenotes.LectureNotesViewModel;
+import interface_adapters.lecturenotes.LectureNotesState;
+import interface_adapters.flashcards.FlashcardViewModel;
+import interface_adapters.evaluate_test.EvaluateTestViewModel;
+import interface_adapters.evaluate_test.EvaluateTestState;
+import interface_adapters.mock_test.MockTestViewModel;
+import interface_adapters.mock_test.MockTestState;
+import usecases.evaluate_test.EvaluateTestOutputData;
+import usecases.mock_test_generation.MockTestGenerationOutputData;
+import views.LectureNotesView;
+import views.FlashcardDisplayView;
+import views.EvaluateTestView;
+import views.WriteTestView;
 
 import javax.swing.*;
 import java.awt.*;
@@ -11,52 +23,54 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ViewTimelineView extends JPanel implements PropertyChangeListener {
     private static final String TIMELINE_PROPERTY = "timeline";
     private static final String ERROR_TITLE = "Error";
-    private static final String NOTES_VIEW_NAME = "notes";
-    private static final String FLASHCARDS_VIEW_NAME = "flashcards";
-    private static final String QUIZ_VIEW_NAME = "quiz";
     private static final String NON_DIGIT_PATTERN = "\\D+";
     
     private final ViewTimelineViewModel vm;
     private final ViewManagerModel viewManagerModel;
-    private final NotesView notesView;
-    private final FlashcardsView flashcardsView;
-    private final QuizView quizView;
+    private final LectureNotesViewModel lectureNotesViewModel;
+    private final FlashcardViewModel flashcardViewModel;
+    private final EvaluateTestViewModel evaluateTestViewModel;
+    private final MockTestViewModel mockTestViewModel;
     private final DefaultListModel<ViewTimelineResponse.TimelineCardVM> listModel = new DefaultListModel<>();
     private final JList<ViewTimelineResponse.TimelineCardVM> list = new JList<>(listModel);
     private final JLabel emptyLabel = new JLabel("This page is empty", SwingConstants.CENTER);
+    private final Gson gson = new Gson();
 
     public ViewTimelineView(ViewTimelineViewModel vm, TimelineController controller, 
-                           ViewManagerModel viewManagerModel, NotesView notesView, 
-                           FlashcardsView flashcardsView, QuizView quizView) {
+                           ViewManagerModel viewManagerModel,
+                           LectureNotesViewModel lectureNotesViewModel,
+                           FlashcardViewModel flashcardViewModel,
+                           EvaluateTestViewModel evaluateTestViewModel,
+                           MockTestViewModel mockTestViewModel) {
         this.vm = vm;
         this.viewManagerModel = viewManagerModel;
-        this.notesView = notesView;
-        this.flashcardsView = flashcardsView;
-        this.quizView = quizView;
+        this.lectureNotesViewModel = lectureNotesViewModel;
+        this.flashcardViewModel = flashcardViewModel;
+        this.evaluateTestViewModel = evaluateTestViewModel;
+        this.mockTestViewModel = mockTestViewModel;
         this.vm.addPropertyChangeListener(this);
-        
-        // Set up back buttons to return to timeline
-        notesView.getBackButton().addActionListener(e -> {
-            viewManagerModel.setState(TIMELINE_PROPERTY);
-            viewManagerModel.firePropertyChange();
-        });
-        flashcardsView.getBackButton().addActionListener(e -> {
-            viewManagerModel.setState(TIMELINE_PROPERTY);
-            viewManagerModel.firePropertyChange();
-        });
-        quizView.getBackButton().addActionListener(e -> {
-            viewManagerModel.setState(TIMELINE_PROPERTY);
-            viewManagerModel.firePropertyChange();
-        });
 
         setLayout(new BorderLayout(8, 8));
         var header = new JPanel(new BorderLayout());
-        header.add(new JLabel("History", SwingConstants.LEFT), BorderLayout.WEST);
+        
+        // Back button to return to workspace
+        JButton backButton = new JButton("← Back");
+        backButton.addActionListener(e -> {
+            viewManagerModel.setState("workspace");
+            viewManagerModel.firePropertyChange();
+        });
+        header.add(backButton, BorderLayout.WEST);
+        
+        // History label in center
+        header.add(new JLabel("History", SwingConstants.CENTER), BorderLayout.CENTER);
+        
+        // Refresh button on the right
         JButton refreshBtn = new JButton("Refresh");
         header.add(refreshBtn, BorderLayout.EAST);
 
@@ -155,88 +169,155 @@ public class ViewTimelineView extends JPanel implements PropertyChangeListener {
      */
     private void openStudyMaterial(ViewTimelineResponse.TimelineCardVM card) {
         if (card.getContentId() == null) {
-            JOptionPane.showMessageDialog(this,
-                    "Unable to open: content ID is missing.",
-                    ERROR_TITLE,
-                    JOptionPane.ERROR_MESSAGE);
+            showError("Unable to open: content ID is missing.");
             return;
         }
 
         if (card.getType() == null) {
-            JOptionPane.showMessageDialog(this,
-                    "Unable to open: content type is missing.",
-                    ERROR_TITLE,
-                    JOptionPane.ERROR_MESSAGE);
+            showError("Unable to open: content type is missing.");
             return;
         }
 
         switch (card.getType()) {
             case "NOTES":
-                // Display notes in NotesView
-                notesView.displayNotes(card.getContentId(), card.getTitle(), card.getSnippet());
-                viewManagerModel.setState(NOTES_VIEW_NAME);
-                viewManagerModel.firePropertyChange();
+                openNotes(card);
                 break;
-                
             case "FLASHCARDS":
-                // Display flashcards in FlashcardsView
-                // Extract number of cards from subtitle (e.g., "20 cards")
-                int numCards = 0;
-                if (card.getSubtitle() != null && !card.getSubtitle().isEmpty()) {
-                    try {
-                        String numStr = card.getSubtitle().replaceAll(NON_DIGIT_PATTERN, "");
-                        if (!numStr.isEmpty()) {
-                            numCards = Integer.parseInt(numStr);
-                        }
-                    } catch (NumberFormatException e) {
-                        // Use default
-                    }
-                }
-                flashcardsView.displayFlashcards(card.getContentId(), numCards);
-                viewManagerModel.setState(FLASHCARDS_VIEW_NAME);
-                viewManagerModel.firePropertyChange();
+                openFlashcards(card);
                 break;
-                
             case "QUIZ":
-                // Display quiz in QuizView
-                // Extract number of questions and score from subtitle
-                int numQuestions = 0;
-                Double score = null;
-                if (card.getSubtitle() != null && !card.getSubtitle().isEmpty()) {
-                    if (card.getSubtitle().startsWith("Score")) {
-                        // Format: "Score 14.0/15"
-                        String[] parts = card.getSubtitle().replace("Score ", "").split("/");
-                        if (parts.length == 2) {
-                            try {
-                                score = Double.parseDouble(parts[0].trim());
-                                numQuestions = Integer.parseInt(parts[1].trim());
-                            } catch (NumberFormatException e) {
-                                // Try to extract just number of questions
-                                String numStr = card.getSubtitle().replaceAll(NON_DIGIT_PATTERN, "");
-                                if (!numStr.isEmpty()) {
-                                    numQuestions = Integer.parseInt(numStr);
-                                }
-                            }
-                        }
-                    } else if (card.getSubtitle().contains("questions")) {
-                        // Format: "15 questions"
-                        String numStr = card.getSubtitle().replaceAll(NON_DIGIT_PATTERN, "");
-                        if (!numStr.isEmpty()) {
-                            numQuestions = Integer.parseInt(numStr);
-                        }
-                    }
-                }
-                quizView.displayQuiz(card.getContentId(), numQuestions, score);
-                viewManagerModel.setState(QUIZ_VIEW_NAME);
-                viewManagerModel.firePropertyChange();
+                openQuiz(card);
                 break;
-                
             default:
-                JOptionPane.showMessageDialog(this,
-                        "Unknown content type: " + card.getType(),
-                        ERROR_TITLE,
-                        JOptionPane.ERROR_MESSAGE);
+                showError("Unknown content type: " + card.getType());
         }
+    }
+
+    private void showError(String message) {
+        JOptionPane.showMessageDialog(this, message, ERROR_TITLE, JOptionPane.ERROR_MESSAGE);
+    }
+
+    private void openNotes(ViewTimelineResponse.TimelineCardVM card) {
+        String notesContent = card.getFullNotesText() != null && !card.getFullNotesText().isEmpty()
+            ? card.getFullNotesText() : card.getSnippet();
+        String notesTitle = card.getTitle() != null && !card.getTitle().isEmpty() ? card.getTitle() : "Notes";
+        
+        LectureNotesState notesState = lectureNotesViewModel.getState();
+        notesState.setNotesText(notesContent != null ? notesContent : "");
+        notesState.setTopic(notesTitle);
+        notesState.setError("");
+        notesState.setLoading(false);
+        lectureNotesViewModel.setState(notesState);
+        
+        navigateToView(lectureNotesViewModel.getViewName());
+    }
+
+    private void openFlashcards(ViewTimelineResponse.TimelineCardVM card) {
+        FlashcardSet flashcardSet = deserializeFlashcards(card.getFlashcardData());
+        
+        if (flashcardSet != null) {
+            flashcardViewModel.setCurrentFlashcardSet(flashcardSet);
+            navigateToView("flashcardDisplay");
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    "Flashcard data is not available.",
+                    ERROR_TITLE,
+                    JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    private FlashcardSet deserializeFlashcards(String jsonData) {
+        if (jsonData == null || jsonData.isEmpty()) {
+            return null;
+        }
+        try {
+            return gson.fromJson(jsonData, FlashcardSet.class);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private void openQuiz(ViewTimelineResponse.TimelineCardVM card) {
+        if (card.getEvaluationData() != null && !card.getEvaluationData().isEmpty()) {
+            openSubmittedQuiz(card.getEvaluationData());
+        } else if (card.getTestData() != null && !card.getTestData().isEmpty()) {
+            openGeneratedQuiz(card.getTestData());
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    "Quiz data is not available.",
+                    ERROR_TITLE,
+                    JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    private void openSubmittedQuiz(String jsonData) {
+        try {
+            EvaluateTestOutputData evaluationData = gson.fromJson(jsonData, EvaluateTestOutputData.class);
+            if (evaluationData != null) {
+                setEvaluationState(evaluationData);
+                navigateToView(evaluateTestViewModel.getViewName());
+            }
+        } catch (Exception e) {
+            showError("Failed to load evaluation data.");
+        }
+    }
+
+    private void openGeneratedQuiz(String jsonData) {
+        try {
+            MockTestGenerationOutputData testData = gson.fromJson(jsonData, MockTestGenerationOutputData.class);
+            if (testData != null) {
+                setTestState(testData);
+                navigateToView(mockTestViewModel.getViewName());
+            }
+        } catch (Exception e) {
+            showError("Failed to load test data.");
+        }
+    }
+
+    private void setEvaluationState(EvaluateTestOutputData evaluationData) {
+        EvaluateTestState evalState = evaluateTestViewModel.getState();
+        evalState.setQuestions(toSafeList(evaluationData.getQuestions()));
+        evalState.setAnswers(toSafeList(evaluationData.getAnswers()));
+        evalState.setUserAnswers(toSafeList(evaluationData.getUserAnswers()));
+        evalState.setCorrectness(toSafeList(evaluationData.getCorrectness()));
+        evalState.setFeedback(toSafeList(evaluationData.getFeedback()));
+        evalState.setScore(evaluationData.getScore());
+        evalState.setCurrentQuestionIndex(0);
+        evaluateTestViewModel.setState(evalState);
+        evaluateTestViewModel.firePropertyChange();
+    }
+
+    private void setTestState(MockTestGenerationOutputData testData) {
+        MockTestState testState = mockTestViewModel.getState();
+        testState.setQuestions(toSafeList(testData.getQuestions()));
+        testState.setAnswers(toSafeList(testData.getAnswers()));
+        testState.setChoices(toSafeListOfLists(testData.getChoices()));
+        testState.setQuestionTypes(toSafeList(testData.getQuestionTypes()));
+        testState.setCurrentQuestionIndex(0);
+        testState.initializeUserAnswers(testState.getQuestions().size());
+        mockTestViewModel.setState(testState);
+        mockTestViewModel.firePropertyChange();
+    }
+
+    private <T> List<T> toSafeList(List<T> list) {
+        return list != null ? new ArrayList<>(list) : new ArrayList<>();
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<List<String>> toSafeListOfLists(List<List<String>> list) {
+        if (list == null) {
+            return new ArrayList<>();
+        }
+        List<List<String>> result = new ArrayList<>();
+        for (List<String> innerList : list) {
+            result.add(innerList != null ? new ArrayList<>(innerList) : new ArrayList<>());
+        }
+        return result;
+    }
+
+    private void navigateToView(String viewName) {
+        viewManagerModel.setState(viewName);
+        viewManagerModel.firePropertyChange();
     }
 
     public String getViewName() { return vm.getViewName(); }

@@ -27,6 +27,12 @@ public class ViewTimelineResponse {
         private String snippet;
         private UUID contentId;
         private String eventId;
+        
+        // Full content fields
+        private String fullNotesText;
+        private String flashcardData;
+        private String testData;
+        private String evaluationData;
 
         // Getters
         public String getTime() { return time; }
@@ -37,6 +43,10 @@ public class ViewTimelineResponse {
         public String getSnippet() { return snippet; }
         public UUID getContentId() { return contentId; }
         public String getEventId() { return eventId; }
+        public String getFullNotesText() { return fullNotesText; }
+        public String getFlashcardData() { return flashcardData; }
+        public String getTestData() { return testData; }
+        public String getEvaluationData() { return evaluationData; }
 
         // Setters
         public void setTime(String time) { this.time = time; }
@@ -47,5 +57,9 @@ public class ViewTimelineResponse {
         public void setSnippet(String snippet) { this.snippet = snippet; }
         public void setContentId(UUID contentId) { this.contentId = contentId; }
         public void setEventId(String eventId) { this.eventId = eventId; }
+        public void setFullNotesText(String fullNotesText) { this.fullNotesText = fullNotesText; }
+        public void setFlashcardData(String flashcardData) { this.flashcardData = flashcardData; }
+        public void setTestData(String testData) { this.testData = testData; }
+        public void setEvaluationData(String evaluationData) { this.evaluationData = evaluationData; }
     }
 }

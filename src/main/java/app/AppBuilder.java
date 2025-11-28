@@ -25,6 +25,7 @@ import usecases.workspace.*;
 
 import views.*;
 
+import Timeline.*;
 import java.util.UUID;
 
 import javax.swing.*;
@@ -39,7 +40,17 @@ public class AppBuilder {
 
     // --- Data Access Objects ---
     private LocalCourseRepository courseDAO = new LocalCourseRepository();
-    private final GeminiApiDataAccess geminiDAO = new GeminiApiDataAccess();
+    private GeminiApiDataAccess geminiDAO;
+    
+    /**
+     * Lazy initialization of GeminiApiDataAccess to ensure API key is set first.
+     */
+    private GeminiApiDataAccess getGeminiDAO() {
+        if (geminiDAO == null) {
+            geminiDAO = new GeminiApiDataAccess();
+        }
+        return geminiDAO;
+    }
 
     // --- ViewModels and Views (stored for wiring) ---
     private MockTestViewModel mockTestViewModel;
@@ -107,7 +118,7 @@ public class AppBuilder {
 
     public AppBuilder addMockTestGenerationUseCase() {
         MockTestPresenter presenter = new MockTestPresenter(mockTestViewModel, viewManagerModel, loadingViewModel, timelineLogger);
-        MockTestGenerationInteractor interactor = new MockTestGenerationInteractor(courseDAO, geminiDAO, presenter);
+        MockTestGenerationInteractor interactor = new MockTestGenerationInteractor(courseDAO, getGeminiDAO(), presenter);
         MockTestController controller = new MockTestController(interactor);
         this.courseWorkspaceView.setMockTestController(controller);
 
@@ -120,7 +131,7 @@ public class AppBuilder {
                 courseDashboardViewModel, viewManagerModel, timelineLogger, mockTestViewModel);
 
         // The Interactor for the evaluation use case. It correctly uses the DAOs.
-        EvaluateTestInteractor evalInteractor = new EvaluateTestInteractor(courseDAO, geminiDAO, evalPresenter);
+        EvaluateTestInteractor evalInteractor = new EvaluateTestInteractor(courseDAO, getGeminiDAO(), evalPresenter);
 
         // The Controller that the WriteTestView will use to trigger the evaluation.
         EvaluateTestController evalController = new EvaluateTestController(evalInteractor);

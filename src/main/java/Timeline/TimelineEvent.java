@@ -20,6 +20,12 @@ public class TimelineEvent {
     private Integer numQuestions;
     private Double score;
 
+    // Full content storage
+    private String fullNotesText;  // Full notes content
+    private String flashcardData;  // JSON or serialized flashcard data
+    private String testData;       // JSON or serialized test data (questions, answers, etc.)
+    private String evaluationData; // JSON or serialized evaluation data (results, feedback, etc.)
+
     public TimelineEvent(UUID courseId, UUID contentId, TimelineEventType type) {
         this.id = UUID.randomUUID();
         this.courseId = courseId;
@@ -46,4 +52,17 @@ public class TimelineEvent {
     public void setNumCards(Integer numCards) { this.numCards = numCards; }
     public void setNumQuestions(Integer numQuestions) { this.numQuestions = numQuestions; }
     public void setScore(Double score) { this.score = score; }
+    
+    // Full content getters and setters
+    public String getFullNotesText() { return fullNotesText; }
+    public void setFullNotesText(String fullNotesText) { this.fullNotesText = fullNotesText; }
+    
+    public String getFlashcardData() { return flashcardData; }
+    public void setFlashcardData(String flashcardData) { this.flashcardData = flashcardData; }
+    
+    public String getTestData() { return testData; }
+    public void setTestData(String testData) { this.testData = testData; }
+    
+    public String getEvaluationData() { return evaluationData; }
+    public void setEvaluationData(String evaluationData) { this.evaluationData = evaluationData; }
 }

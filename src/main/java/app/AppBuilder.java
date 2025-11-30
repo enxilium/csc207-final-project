@@ -1,6 +1,5 @@
 package app;
 
-import data_access.DemoCourseAccess;
 import data_access.GeminiApiDataAccess;
 import data_access.GeminiFlashcardGenerator;
 import data_access.LocalCourseRepository;
@@ -25,7 +24,6 @@ import usecases.workspace.*;
 
 import views.*;
 
-import Timeline.*;
 import java.util.UUID;
 
 import javax.swing.*;

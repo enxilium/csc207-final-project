@@ -1,7 +1,7 @@
 package interface_adapters.evaluate_test;
 
-import Timeline.CourseIdMapper;
-import Timeline.TimelineLogger;
+import usecases.Timeline.CourseIdMapper;
+import usecases.Timeline.TimelineLogger;
 import interface_adapters.LoadingViewModel;
 import interface_adapters.ViewManagerModel;
 import interface_adapters.dashboard.CourseDashboardViewModel;

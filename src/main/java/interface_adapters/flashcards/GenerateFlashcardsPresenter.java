@@ -1,7 +1,7 @@
 package interface_adapters.flashcards;
 
-import Timeline.CourseIdMapper;
-import Timeline.TimelineLogger;
+import usecases.Timeline.CourseIdMapper;
+import usecases.Timeline.TimelineLogger;
 import interface_adapters.ViewManagerModel;
 import usecases.GenerateFlashcardsOutputBoundary;
 import usecases.GenerateFlashcardsResponseModel;

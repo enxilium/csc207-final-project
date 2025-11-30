@@ -2,8 +2,8 @@ package use_case.mock_test_generation;
 
 import entities.PDFFile;
 import entities.TestData;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import usecases.mock_test_generation.MockTestGenerationCourseDataAccessInterface;
 import usecases.mock_test_generation.MockTestGenerationInputData;
 import usecases.mock_test_generation.MockTestGenerationInteractor;
@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class MockTestGenerationTest {
     private RecordingCourseDAO courseDAO;
@@ -24,7 +24,7 @@ public class MockTestGenerationTest {
     private RecordingPresenter presenter;
     private MockTestGenerationInteractor interactor;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         courseDAO = new RecordingCourseDAO();
         testDAO = new RecordingTestDAO();

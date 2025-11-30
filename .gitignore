@@ -39,3 +39,18 @@ build/
 # Local notes and archives
 notes/
 *.zip
+
+# Environment variables
+.env
+.env.local
+
+# Timeline data files (generated at runtime)
+timeline.json
+course_id_mappings.json
+
+# Setup documentation (local only)
+API_KEY_SETUP.md
+run.sh
+
+# Demo files
+**/TimelineSwingDemo.java

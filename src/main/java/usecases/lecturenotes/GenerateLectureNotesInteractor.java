@@ -1,6 +1,5 @@
 package usecases.lecturenotes;
 
-
 import entities.Course;
 import entities.LectureNotes;
 
@@ -25,23 +24,25 @@ public class GenerateLectureNotesInteractor implements GenerateLectureNotesInput
 
         Course course = courseGateway.getCourseById(courseId);
 
-        // Fallback: allow ad-hoc generation even if not in the repository yet.
+        // If the course does not exist, do NOT call the notes gateway.
         if (course == null) {
-            course = new Course(courseId, courseId, "ad-hoc");
+            presenter.prepareFailView("Course not found: " + courseId);
+            return;
         }
 
         try {
             LectureNotes lectureNotes = notesGateway.generateNotes(course, topic);
 
+            // Your OutputData constructor expects 3 args: (courseId, topic, notesText/content)
             GenerateLectureNotesOutputData outputData = new GenerateLectureNotesOutputData(
                     lectureNotes.getCourseId(),
                     lectureNotes.getTopic(),
                     lectureNotes.getContent()
             );
+
             presenter.prepareSuccessView(outputData);
 
-        } catch (NotesGenerationException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
             presenter.prepareFailView("Failed to generate lecture notes. Please try again.");
         }
     }

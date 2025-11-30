@@ -2,6 +2,9 @@ package Timeline;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import usecases.Timeline.InMemoryTimelineRepository;
+import usecases.Timeline.TimelineEvent;
+import usecases.Timeline.TimelineEventType;
 
 import java.util.List;
 import java.util.UUID;

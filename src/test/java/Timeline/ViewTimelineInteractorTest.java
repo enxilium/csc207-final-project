@@ -2,6 +2,10 @@ package Timeline;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import usecases.Timeline.TimelineEvent;
+import usecases.Timeline.TimelineEventType;
+import usecases.Timeline.ViewTimelineInteractor;
+import usecases.Timeline.ViewTimelineResponse;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -94,7 +98,7 @@ class ViewTimelineInteractorTest {
         UUID contentId = UUID.randomUUID();
         TimelineEvent event = new TimelineEvent(courseId, contentId, TimelineEventType.QUIZ_SUBMITTED);
         event.setNumQuestions(10);
-        event.setScore(8.5);
+        event.setScore(85.0); // 85% = 8.5 out of 10, which rounds to 9
         repository.save(event);
 
         interactor.execute(courseId);
@@ -104,7 +108,7 @@ class ViewTimelineInteractorTest {
         assertEquals("QUIZ", card.getType());
         assertEquals("score", card.getIcon());
         assertEquals("Quiz — Submitted", card.getTitle());
-        assertEquals("Score 8.5/10", card.getSubtitle());
+        assertEquals("Score 9/10", card.getSubtitle());
     }
 
     @Test
@@ -207,7 +211,7 @@ class ViewTimelineInteractorTest {
     void testQuizSubmittedNullNumQuestions() {
         UUID contentId = UUID.randomUUID();
         TimelineEvent event = new TimelineEvent(courseId, contentId, TimelineEventType.QUIZ_SUBMITTED);
-        event.setScore(8.5);
+        event.setScore(85.0); // Percentage score (not used in this test, but for consistency)
         // Don't set numQuestions - should go to else branch
         repository.save(event);
 
@@ -259,7 +263,7 @@ class ViewTimelineInteractorTest {
         quiz.setNumQuestions(3);
         TimelineEvent submitted = new TimelineEvent(courseId, subId, TimelineEventType.QUIZ_SUBMITTED);
         submitted.setNumQuestions(3);
-        submitted.setScore(2.5);
+        submitted.setScore(83.33); // 83.33% = 2.5 out of 3, which rounds to 2
 
         repository.save(notes);
         repository.save(cards);

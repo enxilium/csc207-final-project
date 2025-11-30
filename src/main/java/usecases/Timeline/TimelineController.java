@@ -1,4 +1,4 @@
-package Timeline;
+package usecases.Timeline;
 
 import java.util.UUID;
 

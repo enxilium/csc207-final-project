@@ -1,4 +1,4 @@
-package Timeline;
+package usecases.Timeline;
 
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -67,7 +67,9 @@ public class ViewTimelineInteractor implements ViewTimelineInputBoundary {
                 vm.setType("QUIZ");
                 vm.setTitle("Quiz — Submitted");
                 if (e.getNumQuestions() != null && e.getScore() != null) {
-                    vm.setSubtitle("Score " + e.getScore() + "/" + e.getNumQuestions());
+                    // Calculate correct answers from percentage score
+                    int correctAnswers = (int) Math.round(e.getScore() * e.getNumQuestions() / 100.0);
+                    vm.setSubtitle("Score " + correctAnswers + "/" + e.getNumQuestions());
                 } else {
                     vm.setSubtitle("");
                 }

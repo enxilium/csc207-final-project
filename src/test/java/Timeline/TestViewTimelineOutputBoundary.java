@@ -1,5 +1,8 @@
 package Timeline;
 
+import usecases.Timeline.ViewTimelineOutputBoundary;
+import usecases.Timeline.ViewTimelineResponse;
+
 /**
  * Simple test implementation of ViewTimelineOutputBoundary for testing purposes.
  */

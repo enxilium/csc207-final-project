@@ -1,4 +1,4 @@
-package Timeline;
+package usecases.Timeline;
 
 public class ViewTimelineSwingPresenter implements ViewTimelineOutputBoundary {
     private final ViewTimelineViewModel vm;

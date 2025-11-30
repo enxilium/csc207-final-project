@@ -1,6 +1,8 @@
 package Timeline;
 
 import org.junit.jupiter.api.Test;
+import usecases.Timeline.TimelineEvent;
+import usecases.Timeline.TimelineEventType;
 
 import java.time.Instant;
 import java.util.UUID;

@@ -1,4 +1,4 @@
-package Timeline;
+package usecases.Timeline;
 
 public interface ViewTimelineOutputBoundary {
     void present(ViewTimelineResponse response);

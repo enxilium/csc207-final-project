@@ -1,4 +1,4 @@
-package Timeline;
+package usecases.Timeline;
 
 import com.google.gson.Gson;
 import entities.FlashcardSet;
@@ -12,10 +12,6 @@ import interface_adapters.mock_test.MockTestViewModel;
 import interface_adapters.mock_test.MockTestState;
 import usecases.evaluate_test.EvaluateTestOutputData;
 import usecases.mock_test_generation.MockTestGenerationOutputData;
-import views.LectureNotesView;
-import views.FlashcardDisplayView;
-import views.EvaluateTestView;
-import views.WriteTestView;
 
 import javax.swing.*;
 import java.awt.*;

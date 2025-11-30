@@ -1,5 +1,7 @@
 package Timeline;
 
+import usecases.Timeline.ViewTimelineInputBoundary;
+
 import java.util.UUID;
 
 /**

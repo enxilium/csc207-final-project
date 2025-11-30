@@ -1,6 +1,7 @@
 package Timeline;
 
 import org.junit.jupiter.api.Test;
+import usecases.Timeline.TimelineEventType;
 
 import static org.junit.jupiter.api.Assertions.*;
 

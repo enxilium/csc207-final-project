@@ -1,4 +1,4 @@
-package Timeline;
+package usecases.Timeline;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;

@@ -1,4 +1,4 @@
-package Timeline;
+package usecases.Timeline;
 
 public enum TimelineEventType {
     NOTES_GENERATED,

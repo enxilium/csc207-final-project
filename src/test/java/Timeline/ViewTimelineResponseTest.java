@@ -1,6 +1,7 @@
 package Timeline;
 
 import org.junit.jupiter.api.Test;
+import usecases.Timeline.ViewTimelineResponse;
 
 import java.util.ArrayList;
 import java.util.List;

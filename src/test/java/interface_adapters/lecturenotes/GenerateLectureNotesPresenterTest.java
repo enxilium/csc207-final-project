@@ -1,7 +1,7 @@
 package interface_adapters.lecturenotes;
 
-import Timeline.TimelineLogger;
-import Timeline.InMemoryTimelineRepository;
+import usecases.Timeline.TimelineLogger;
+import usecases.Timeline.InMemoryTimelineRepository;
 import interface_adapters.ViewManagerModel;
 import org.junit.jupiter.api.Test;
 import usecases.lecturenotes.GenerateLectureNotesOutputData;

@@ -1,6 +1,5 @@
 package app;
 
-import data_access.DemoCourseAccess;
 import data_access.GeminiApiDataAccess;
 import data_access.GeminiFlashcardGenerator;
 import data_access.LocalCourseRepository;
@@ -17,6 +16,7 @@ import interface_adapters.mock_test.*;
 import interface_adapters.workspace.*;
 import usecases.*;
 import usecases.GenerateFlashcardsInteractor;
+import usecases.Timeline.*;
 import usecases.dashboard.*;
 import usecases.evaluate_test.EvaluateTestInteractor;
 import usecases.mock_test_generation.MockTestGenerationInteractor;
@@ -24,7 +24,6 @@ import usecases.workspace.*;
 
 import views.*;
 
-import Timeline.*;
 import java.util.UUID;
 
 import javax.swing.*;
@@ -83,7 +82,7 @@ public class AppBuilder {
     private ViewTimelineViewModel timelineViewModel;
     private ViewTimelineView timelineView;
     private TimelineController timelineController;
-    private final ITimelineRepository timelineRepository = new Timeline.FileTimelineRepository();
+    private final ITimelineRepository timelineRepository = new FileTimelineRepository();
     private final TimelineLogger timelineLogger = new TimelineLogger(timelineRepository);
 
     public AppBuilder() {
@@ -298,7 +297,7 @@ public class AppBuilder {
 
             if (courseId != null && !courseId.isEmpty()) {
                 // Convert String course ID to UUID using CourseIdMapper
-                UUID courseUuid = Timeline.CourseIdMapper.getUuidForCourseId(courseId);
+                UUID courseUuid = CourseIdMapper.getUuidForCourseId(courseId);
                 
                 // Set the course ID in the Timeline ViewModel
                 this.timelineViewModel.setCourseId(courseUuid);

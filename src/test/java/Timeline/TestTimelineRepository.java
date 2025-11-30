@@ -1,5 +1,8 @@
 package Timeline;
 
+import usecases.Timeline.ITimelineRepository;
+import usecases.Timeline.TimelineEvent;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

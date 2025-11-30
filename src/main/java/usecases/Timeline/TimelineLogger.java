@@ -1,4 +1,4 @@
-package Timeline;
+package usecases.Timeline;
 
 import com.google.gson.Gson;
 import entities.FlashcardSet;

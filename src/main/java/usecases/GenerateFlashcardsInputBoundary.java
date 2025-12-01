@@ -5,5 +5,11 @@ package usecases;
  * Defines the method that triggers the generation process.
  */
 public interface GenerateFlashcardsInputBoundary {
-    void execute(String courseName, String content);
+  /**
+   * Executes the flashcard generation process.
+   *
+   * @param courseName the name of the course
+   * @param content the content to generate flashcards from
+   */
+  void execute(String courseName, String content);
 }

@@ -2,40 +2,68 @@ package entities;
 
 import java.util.List;
 
+/**
+ * Represents a set of flashcards for a course.
+ */
 public class FlashcardSet {
-    private final String courseName;
-    private final List<Flashcard> flashcards;
+  private final String courseName;
+  private final List<Flashcard> flashcards;
 
-    // Constructor — allows creating a set with a course name and a list of flashcards
-    public FlashcardSet(String courseName, List<Flashcard> flashcards) {
-        this.courseName = courseName;
-        this.flashcards = flashcards;
-    }
+  /**
+   * Constructs a FlashcardSet with the given course name and flashcards.
+   *
+   * @param courseName the name of the course
+   * @param flashcards the list of flashcards
+   */
+  public FlashcardSet(String courseName, List<Flashcard> flashcards) {
+    this.courseName = courseName;
+    this.flashcards = flashcards;
+  }
 
-    public String getCourseName() {
-        return courseName;
-    }
+  /**
+   * Gets the course name.
+   *
+   * @return the course name
+   */
+  public String getCourseName() {
+    return courseName;
+  }
 
-    public List<Flashcard> getFlashcards() {
-        return flashcards;
-    }
+  /**
+   * Gets the list of flashcards.
+   *
+   * @return the list of flashcards
+   */
+  public List<Flashcard> getFlashcards() {
+    return flashcards;
+  }
 
-    // Helper methods for extended usage
-    public int size() {
-        return flashcards.size();
-    }
+  /**
+   * Gets the number of flashcards in this set.
+   *
+   * @return the number of flashcards
+   */
+  public int size() {
+    return flashcards.size();
+  }
 
-    public Flashcard getCard(int index) {
-        return flashcards.get(index);
-    }
+  /**
+   * Gets the flashcard at the specified index.
+   *
+   * @param index the index
+   * @return the flashcard at the index
+   */
+  public Flashcard getCard(int index) {
+    return flashcards.get(index);
+  }
 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Flashcard Set for Course: ").append(courseName).append("\n");
-        for (Flashcard f : flashcards) {
-            sb.append(" - ").append(f.toString()).append("\n");
-        }
-        return sb.toString();
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("Flashcard Set for Course: ").append(courseName).append("\n");
+    for (Flashcard f : flashcards) {
+      sb.append(" - ").append(f.toString()).append("\n");
     }
+    return sb.toString();
+  }
 }

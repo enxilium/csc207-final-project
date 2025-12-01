@@ -13,7 +13,7 @@ public class TimelineEvent {
     private final UUID courseId;
     private final UUID contentId;
     private final TimelineEventType type;
-    private final Instant occurredAt;
+    private Instant occurredAt;
     private String title;
     private String snippet;
     private Integer numCards;
@@ -32,6 +32,16 @@ public class TimelineEvent {
         this.contentId = contentId;
         this.type = type;
         this.occurredAt = Instant.now();
+    }
+
+    /**
+     * Sets the occurredAt timestamp.
+     * Used when restoring events from persistence.
+     *
+     * @param occurredAt the timestamp to set
+     */
+    public void setOccurredAt(Instant occurredAt) {
+        this.occurredAt = occurredAt;
     }
 
     // Getters

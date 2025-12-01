@@ -1,176 +1,197 @@
 package data_access;
-import entities.*;
-import entities.Course;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Optional;
+import entities.Course;
+import entities.PDFFile;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import org.json.JSONObject;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import org.json.JSONArray;
+import org.json.JSONObject;
 import usecases.evaluate_test.EvaluateTestCourseDataAccessInterface;
 import usecases.mock_test_generation.MockTestGenerationCourseDataAccessInterface;
 
-public class LocalCourseRepository implements usecases.ICourseRepository, MockTestGenerationCourseDataAccessInterface,
-        EvaluateTestCourseDataAccessInterface {
-    private List<Course> courses = null;
-    private final String FILE_NAME = "courses.json";
-    public LocalCourseRepository(){
-        courses = new ArrayList<>();
-        CreateFileIfNotExist();
+/**
+ * Local file-based implementation of course repository.
+ */
+public class LocalCourseRepository implements usecases.ICourseRepository,
+    MockTestGenerationCourseDataAccessInterface,
+    EvaluateTestCourseDataAccessInterface {
+  private List<Course> courses = null;
+  private final String FILE_NAME = "courses.json";
+
+  /**
+   * Constructs a LocalCourseRepository and initializes the file if needed.
+   */
+  public LocalCourseRepository() {
+    courses = new ArrayList<>();
+    CreateFileIfNotExist();
+  }
+
+  @Override
+  public void create(Course course) {
+    courses.add(course);
+    writeCourses(courses);
+  }
+
+  @Override
+  public void update(Course course) {
+    List<Course> courses = this.readCourses();
+    Optional<entities.Course> foundObject = courses.stream()
+        .filter(obj -> obj.getCourseId().equals(course.getCourseId()))
+        .findFirst();
+    if (foundObject.isPresent()) {
+      Course foundCourse = foundObject.get();
+      foundCourse.setCourseId(course.getCourseId());
+      foundCourse.setName(course.getName());
+      foundCourse.setDescription(course.getDescription());
+      // Preserve the files from the updated course
+      // The files are already updated in the course object passed in
+      // We need to replace the files in foundCourse with the ones from course
+      foundCourse.getUploadedFiles().clear();
+      foundCourse.getUploadedFiles().addAll(course.getUploadedFiles());
     }
-    @Override
-    public void create(Course course) {
+    writeCourses(courses);
+  }
+
+  @Override
+  public Course findById(String courseId) {
+    this.courses = readCourses();
+    if (this.courses.size() == 0) {
+      return null;
+    }
+    Optional<Course> foundObject = courses.stream()
+        .filter(obj -> obj.getCourseId().equals(courseId))
+        .findFirst();
+    if (foundObject.isPresent()) {
+      return foundObject.get();
+    } else {
+      return null;
+    }
+  }
+
+  @Override
+  public List<Course> findAll() {
+    this.courses = readCourses();
+    return this.courses;
+  }
+
+  @Override
+  public void delete(String courseId) {
+    this.courses = readCourses();
+    if (this.courses.size() == 0) {
+      return;
+    }
+
+    this.courses.removeIf(obj -> obj.getCourseId().equals(courseId));
+    writeCourses(courses);
+  }
+
+  /**
+   * Creates the courses file if it doesn't exist.
+   */
+  private void CreateFileIfNotExist() {
+    File file = new File(FILE_NAME);
+
+    try {
+      if (file.createNewFile()) {
+        System.out.println("File created: " + file.getName());
+        writeCourses(this.courses);
+      } else {
+        System.out.println("File already exists.");
+      }
+    } catch (IOException e) {
+      System.out.println("An error occurred during file creation.");
+      e.printStackTrace();
+    }
+  }
+
+  /**
+   * Reads courses from the JSON file.
+   *
+   * @return a list of courses
+   */
+  private List<Course> readCourses() {
+    List<Course> courses = new ArrayList<>();
+    try {
+      String jsonString = Files.readString(Paths.get(FILE_NAME));
+      JSONArray jsonArray = new JSONArray(jsonString);
+
+      for (int i = 0; i < jsonArray.length(); i++) {
+        JSONObject jsonObject = jsonArray.getJSONObject(i);
+
+        String courseId = jsonObject.getString("courseId");
+        String name = jsonObject.getString("name");
+        String description = jsonObject.getString("description");
+
+        Course course = new Course(courseId, name, description);
+
+        if (jsonObject.has("uploadedFiles")) {
+          JSONArray filesArray = jsonObject.getJSONArray("uploadedFiles");
+          for (int j = 0; j < filesArray.length(); j++) {
+            course.addFile(new PDFFile(filesArray.getString(j)));
+          }
+        }
+
         courses.add(course);
-        writeCourses(courses);
+      }
+    } catch (IOException e) {
+      System.out.println("Could not read " + FILE_NAME
+          + ", starting with empty course list.");
+    } catch (Exception e) {
+      e.printStackTrace();
     }
-    @Override
-    public void update(Course course) {
-        List<Course> courses = this.readCourses();
-        Optional<entities.Course> foundObject = courses.stream()
-                .filter(obj -> obj.getCourseId().equals(course.getCourseId()))
-                .findFirst();
-        if (foundObject.isPresent()) {
-            Course foundCourse = foundObject.get();
-            foundCourse.setCourseId(course.getCourseId());
-            foundCourse.setName(course.getName());
-            foundCourse.setDescription(course.getDescription());
-            // Preserve the files from the updated course
-            // The files are already updated in the course object passed in
-            // We need to replace the files in foundCourse with the ones from course
-            foundCourse.getUploadedFiles().clear();
-            foundCourse.getUploadedFiles().addAll(course.getUploadedFiles());
-        }
-        writeCourses(courses);
+    return courses;
+  }
+
+  /**
+   * Writes courses to the JSON file.
+   *
+   * @param courses the list of courses to write
+   */
+  private void writeCourses(List<Course> courses) {
+    //JSONObject rootObject = new JSONObject();
+    //rootObject.put("courses", courses);
+    JSONArray objectArray = new JSONArray();
+    courses.forEach(course -> {
+      JSONObject obj = new JSONObject();
+      obj.put("courseId", course.getCourseId());
+      obj.put("name", course.getName());
+      obj.put("description", course.getDescription());
+
+      // Write uploaded files
+      JSONArray filesArray = new JSONArray();
+      for (PDFFile file : course.getUploadedFiles()) {
+        filesArray.put(file.getPath().toString());
+      }
+      obj.put("uploadedFiles", filesArray);
+
+      objectArray.put(obj);
+    });
+
+    // Write the JSON array to a file
+    try (FileWriter file = new FileWriter(FILE_NAME)) {
+      file.write(objectArray.toString());
+      System.out.println("Successfully wrote JSON array to file.");
+    } catch (IOException e) {
+      e.printStackTrace();
     }
+  }
 
-    @Override
-    public Course findById(String courseId) {
-        this.courses = readCourses();
-        if (this.courses.size() == 0) {
-            return null;
-        }
-        Optional<Course> foundObject = courses.stream()
-                .filter(obj -> obj.getCourseId().equals(courseId))
-                .findFirst();
-        if (foundObject.isPresent()) {
-            return foundObject.get();
-        }else{
-            return null;
-        }
+  @Override
+  public List<PDFFile> getCourseMaterials(String courseId) {
+    this.courses = readCourses(); // refresh from file every time
+
+    for (Course course : this.courses) {
+      if (course.getCourseId().equals(courseId)) {
+        return course.getUploadedFiles();
+      }
     }
-
-    @Override
-    public List<Course> findAll() {
-        this.courses = readCourses();
-        return this.courses;
-    }
-
-    @Override
-    public void delete(String courseId) {
-        this.courses = readCourses();
-        if (this.courses.size() == 0) {
-            return ;
-        }
-
-        this.courses.removeIf(obj -> obj.getCourseId().equals(courseId));
-        writeCourses(courses);
-    }
-
-
-    private void CreateFileIfNotExist(){
-        File file = new File(FILE_NAME);
-
-        try {
-            if (file.createNewFile()) {
-                System.out.println("File created: " + file.getName());
-                writeCourses(this.courses);
-            } else {
-                System.out.println("File already exists.");
-            }
-        } catch (IOException e) {
-            System.out.println("An error occurred during file creation.");
-            e.printStackTrace();
-        }
-    }
-
-    private List<Course> readCourses() {
-        List<Course> courses = new ArrayList<>();
-        try {
-            String jsonString = Files.readString(Paths.get(FILE_NAME));
-            JSONArray jsonArray = new JSONArray(jsonString);
-
-            for (int i = 0; i < jsonArray.length(); i++) {
-                JSONObject jsonObject = jsonArray.getJSONObject(i);
-
-                String courseId = jsonObject.getString("courseId");
-                String name = jsonObject.getString("name");
-                String description = jsonObject.getString("description");
-
-                Course course = new Course(courseId, name, description);
-
-                if (jsonObject.has("uploadedFiles")) {
-                    JSONArray filesArray = jsonObject.getJSONArray("uploadedFiles");
-                    for (int j = 0; j < filesArray.length(); j++) {
-                        course.addFile(new PDFFile(filesArray.getString(j)));
-                    }
-                }
-
-                courses.add(course);
-            }
-        } catch (IOException e) {
-            System.out.println("Could not read " + FILE_NAME + ", starting with empty course list.");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return courses;
-    }
-
-
-    private void writeCourses(List<Course> courses){
-        //JSONObject rootObject = new JSONObject();
-        //rootObject.put("courses", courses);
-        JSONArray objectArray = new JSONArray();
-        courses.forEach(course -> {
-            JSONObject obj = new JSONObject();
-            obj.put("courseId", course.getCourseId());
-            obj.put("name", course.getName());
-            obj.put("description", course.getDescription());
-
-            // Write uploaded files
-            JSONArray filesArray = new JSONArray();
-            for (PDFFile file : course.getUploadedFiles()) {
-                filesArray.put(file.getPath().toString());
-            }
-            obj.put("uploadedFiles", filesArray);
-
-            objectArray.put(obj);
-        });
-
-
-        // Write the JSON array to a file
-        try (FileWriter file = new FileWriter(FILE_NAME)) {
-            file.write(objectArray.toString());
-            System.out.println("Successfully wrote JSON array to file.");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public List<PDFFile> getCourseMaterials(String courseId) {
-        this.courses = readCourses(); // refresh from file every time
-
-        for (Course course : this.courses) {
-            if (course.getCourseId().equals(courseId)) {
-                return course.getUploadedFiles();
-            }
-        }
-        return Collections.emptyList();
-    }
+    return Collections.emptyList();
+  }
 }

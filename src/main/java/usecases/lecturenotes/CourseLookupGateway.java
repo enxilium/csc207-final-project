@@ -12,8 +12,11 @@ import entities.Course;
  */
 public interface CourseLookupGateway {
 
-    /**
-     * Return the Course with the given ID, or null if it doesn't exist.
-     */
-    Course getCourseById(String courseId);
+  /**
+   * Return the Course with the given ID, or null if it doesn't exist.
+   *
+   * @param courseId the course ID
+   * @return the Course, or null if not found
+   */
+  Course getCourseById(String courseId);
 }

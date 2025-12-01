@@ -3,10 +3,9 @@ package data_access;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import entities.TimelineEvent;
+import entities.TimelineEventType;
 import usecases.Timeline.CourseIdMapper;
-import usecases.Timeline.ITimelineRepository;
-import usecases.Timeline.TimelineEvent;
-import usecases.Timeline.TimelineEventType;
 
 import java.io.File;
 import java.io.FileWriter;

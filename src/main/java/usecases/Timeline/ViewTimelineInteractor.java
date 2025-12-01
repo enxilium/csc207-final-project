@@ -1,5 +1,7 @@
 package usecases.Timeline;
 
+import data_access.ITimelineRepository;
+import entities.TimelineEvent;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;

@@ -1,7 +1,10 @@
 package usecases.Timeline;
 
 import com.google.gson.Gson;
+import data_access.ITimelineRepository;
 import entities.FlashcardSet;
+import entities.TimelineEvent;
+import entities.TimelineEventType;
 
 import java.util.UUID;
 

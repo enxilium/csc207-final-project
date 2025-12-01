@@ -322,3 +322,4 @@ public class ViewTimelineView extends JPanel implements PropertyChangeListener {
     public String getViewName() { return vm.getViewName(); }
 }
 
+

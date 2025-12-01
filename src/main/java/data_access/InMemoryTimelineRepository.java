@@ -1,7 +1,6 @@
 package data_access;
 
-import usecases.Timeline.ITimelineRepository;
-import usecases.Timeline.TimelineEvent;
+import entities.TimelineEvent;
 
 import java.util.List;
 import java.util.UUID;

@@ -2,8 +2,8 @@ package Timeline;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import usecases.Timeline.TimelineEvent;
-import usecases.Timeline.TimelineEventType;
+import entities.TimelineEvent;
+import entities.TimelineEventType;
 import usecases.Timeline.ViewTimelineInteractor;
 import usecases.Timeline.ViewTimelineResponse;
 

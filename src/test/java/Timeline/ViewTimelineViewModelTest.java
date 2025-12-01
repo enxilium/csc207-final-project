@@ -3,7 +3,7 @@ package Timeline;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import usecases.Timeline.ViewTimelineResponse;
-import usecases.Timeline.ViewTimelineViewModel;
+import interface_adapters.timeline.ViewTimelineViewModel;
 
 import java.beans.PropertyChangeEvent;
 import java.util.List;

@@ -5,7 +5,11 @@ import interface_adapters.workspace.CourseWorkspaceViewModel;
 import interface_adapters.workspace.CourseState;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import usecases.Timeline.*;
+import usecases.Timeline.CourseIdMapper;
+import usecases.Timeline.ITimelineRepository;
+import usecases.Timeline.TimelineLogger;
+import interface_adapters.timeline.TimelineController;
+import interface_adapters.timeline.ViewTimelineViewModel;
 
 import java.lang.reflect.Field;
 import java.util.UUID;
@@ -44,14 +48,17 @@ class AppBuilderTimelineIntegrationTest {
             return;
         }
         
-        // Get the CourseWorkspaceViewModel from AppBuilder
+        // Add required components (must add all views before course use cases)
+        appBuilder.addCourseDashboardView();
+        appBuilder.addCourseWorkspaceView();
+        appBuilder.addCourseCreateView();
+        appBuilder.addCourseEditView();
+        appBuilder.addTimelineView();
+        
+        // Get the CourseWorkspaceViewModel from AppBuilder (after it's initialized)
         Field vmField = AppBuilder.class.getDeclaredField("courseWorkspaceViewModel");
         vmField.setAccessible(true);
         courseWorkspaceViewModel = (CourseWorkspaceViewModel) vmField.get(appBuilder);
-        
-        // Add required components
-        appBuilder.addCourseWorkspaceView();
-        appBuilder.addTimelineView();
     }
 
     @Test
@@ -103,7 +110,7 @@ class AppBuilderTimelineIntegrationTest {
         assertDoesNotThrow(() -> action.run());
         
         // Verify timelineViewModel is now initialized
-        ViewTimelineViewModel vm = (ViewTimelineViewModel) timelineViewModelField.get(appBuilder);
+        interface_adapters.timeline.ViewTimelineViewModel vm = (interface_adapters.timeline.ViewTimelineViewModel) timelineViewModelField.get(appBuilder);
         assertNotNull(vm, "Timeline should be initialized when action is called");
     }
 
@@ -172,8 +179,9 @@ class AppBuilderTimelineIntegrationTest {
         
         appBuilder.addCourseUseCases();
         
-        // Set up a course with empty course ID (shouldn't happen in practice, but test edge case)
-        Course course = new Course("", "Test", "Test");
+        // Test with a CourseState that has a course with a valid courseId
+        // (Note: Course constructor doesn't allow empty courseId, so we test with a valid one)
+        Course course = new Course("TEST", "Test", "Test");
         CourseState state = new CourseState();
         state.setCourse(course);
         courseWorkspaceViewModel.setState(state);
@@ -184,7 +192,7 @@ class AppBuilderTimelineIntegrationTest {
         actionField.setAccessible(true);
         Runnable action = (Runnable) actionField.get(courseWorkspaceView);
         
-        // Should not throw when courseId is empty
+        // Should not throw
         assertDoesNotThrow(() -> action.run());
     }
 
@@ -215,7 +223,7 @@ class AppBuilderTimelineIntegrationTest {
         // Verify timelineViewModel has the course ID set
         Field timelineViewModelField = AppBuilder.class.getDeclaredField("timelineViewModel");
         timelineViewModelField.setAccessible(true);
-        ViewTimelineViewModel vm = (ViewTimelineViewModel) timelineViewModelField.get(appBuilder);
+        interface_adapters.timeline.ViewTimelineViewModel vm = (interface_adapters.timeline.ViewTimelineViewModel) timelineViewModelField.get(appBuilder);
         
         assertNotNull(vm);
         UUID expectedUuid = CourseIdMapper.getUuidForCourseId("PHL245");
@@ -249,7 +257,7 @@ class AppBuilderTimelineIntegrationTest {
         // Verify timelineController exists
         Field timelineControllerField = AppBuilder.class.getDeclaredField("timelineController");
         timelineControllerField.setAccessible(true);
-        TimelineController controller = (TimelineController) timelineControllerField.get(appBuilder);
+        interface_adapters.timeline.TimelineController controller = (interface_adapters.timeline.TimelineController) timelineControllerField.get(appBuilder);
         assertNotNull(controller, "TimelineController should exist after action is executed");
     }
 

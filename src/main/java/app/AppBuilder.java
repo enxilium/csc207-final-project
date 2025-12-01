@@ -16,10 +16,28 @@ import interface_adapters.mock_test.*;
 import interface_adapters.workspace.*;
 import usecases.*;
 import usecases.GenerateFlashcardsInteractor;
-import usecases.Timeline.*;
+import usecases.GenerateFlashcardsInputBoundary;
+import usecases.GenerateFlashcardsOutputBoundary;
+import usecases.GenerateFlashcardsResponseModel;
+import usecases.Timeline.CourseIdMapper;
+import usecases.Timeline.ITimelineRepository;
+import usecases.Timeline.TimelineLogger;
+import usecases.Timeline.ViewTimelineInputBoundary;
+import usecases.Timeline.ViewTimelineInteractor;
+import usecases.Timeline.ViewTimelineOutputBoundary;
+import usecases.Timeline.ViewTimelineResponse;
+import interface_adapters.timeline.TimelineController;
+import interface_adapters.timeline.ViewTimelineViewModel;
+import interface_adapters.timeline.ViewTimelineSwingPresenter;
+import views.ViewTimelineView;
+import data_access.FileTimelineRepository;
 import usecases.dashboard.*;
 import usecases.evaluate_test.EvaluateTestInteractor;
+import usecases.evaluate_test.EvaluateTestOutputBoundary;
+import usecases.evaluate_test.EvaluateTestOutputData;
 import usecases.mock_test_generation.MockTestGenerationInteractor;
+import usecases.mock_test_generation.MockTestGenerationOutputBoundary;
+import usecases.mock_test_generation.MockTestGenerationOutputData;
 import usecases.workspace.*;
 
 import views.*;
@@ -79,10 +97,10 @@ public class AppBuilder {
     private FlashcardDisplayView flashcardDisplayView;
 
     // === IAIN: Timeline view models & views ===
-    private ViewTimelineViewModel timelineViewModel;
-    private ViewTimelineView timelineView;
-    private TimelineController timelineController;
-    private final ITimelineRepository timelineRepository = new FileTimelineRepository();
+    private interface_adapters.timeline.ViewTimelineViewModel timelineViewModel;
+    private views.ViewTimelineView timelineView;
+    private interface_adapters.timeline.TimelineController timelineController;
+    private final ITimelineRepository timelineRepository = new data_access.FileTimelineRepository();
     private final TimelineLogger timelineLogger = new TimelineLogger(timelineRepository);
 
     public AppBuilder() {
@@ -115,7 +133,44 @@ public class AppBuilder {
     }
 
     public AppBuilder addMockTestGenerationUseCase() {
-        MockTestPresenter presenter = new MockTestPresenter(mockTestViewModel, viewManagerModel, loadingViewModel, timelineLogger);
+        // Create original presenter
+        MockTestPresenter originalPresenter = new MockTestPresenter(mockTestViewModel, viewManagerModel, loadingViewModel);
+        
+        // Wrap presenter to add Timeline logging
+        MockTestGenerationOutputBoundary presenter =
+                new MockTestGenerationOutputBoundary() {
+                    @Override
+                    public void presentTest(MockTestGenerationOutputData outputData) {
+                        originalPresenter.presentTest(outputData);
+                        
+                        // Log to Timeline
+                        try {
+                            String courseId = outputData.getCourseId();
+                            if (courseId != null && !courseId.isEmpty()) {
+                                UUID courseUuid = CourseIdMapper.getUuidForCourseId(courseId);
+                                UUID contentId = UUID.randomUUID();
+                                int numQuestions = outputData.getQuestions() != null ? outputData.getQuestions().size() : 0;
+                                // Serialize to JSON in the framework layer (not in use case)
+                                com.google.gson.Gson gson = new com.google.gson.Gson();
+                                String testDataJson = gson.toJson(outputData);
+                                timelineLogger.logQuizGenerated(courseUuid, contentId, numQuestions, testDataJson);
+                            }
+                        } catch (Exception e) {
+                            // Don't break the flow if Timeline logging fails
+                        }
+                    }
+                    
+                    @Override
+                    public void presentLoading() {
+                        originalPresenter.presentLoading();
+                    }
+                    
+                    @Override
+                    public void presentError(String error) {
+                        originalPresenter.presentError(error);
+                    }
+                };
+        
         MockTestGenerationInteractor interactor = new MockTestGenerationInteractor(courseDAO, getGeminiDAO(), presenter);
         MockTestController controller = new MockTestController(interactor);
         this.courseWorkspaceView.setMockTestController(controller);
@@ -124,9 +179,52 @@ public class AppBuilder {
     }
 
     public AppBuilder addEvaluateTestUseCase() {
-        // The Presenter for the evaluation results view
-        EvaluateTestPresenter evalPresenter = new EvaluateTestPresenter(evaluateTestViewModel, loadingViewModel,
-                courseDashboardViewModel, viewManagerModel, timelineLogger, mockTestViewModel);
+        // The original Presenter for the evaluation results view
+        EvaluateTestPresenter originalEvalPresenter = new EvaluateTestPresenter(evaluateTestViewModel, loadingViewModel,
+                courseDashboardViewModel, viewManagerModel);
+        
+        // Wrap presenter to add Timeline logging
+        EvaluateTestOutputBoundary evalPresenter =
+                new EvaluateTestOutputBoundary() {
+                    @Override
+                    public void presentEvaluationResults(EvaluateTestOutputData evaluateTestOutputData) {
+                        originalEvalPresenter.presentEvaluationResults(evaluateTestOutputData);
+                        
+                        // Log to Timeline
+                        try {
+                            // Get courseId from MockTestViewModel state
+                            if (mockTestViewModel != null) {
+                                var mockTestState = mockTestViewModel.getState();
+                                String courseId = mockTestState != null ? mockTestState.getCourseId() : null;
+                                
+                                if (courseId != null && !courseId.isEmpty()) {
+                                    UUID courseUuid = CourseIdMapper.getUuidForCourseId(courseId);
+                                    UUID contentId = UUID.randomUUID();
+                                    int numQuestions = evaluateTestOutputData.getQuestions() != null 
+                                            ? evaluateTestOutputData.getQuestions().size() 
+                                            : 0;
+                                    double score = evaluateTestOutputData.getScore();
+                                    // Serialize to JSON in the framework layer (not in use case)
+                                    com.google.gson.Gson gson = new com.google.gson.Gson();
+                                    String evaluationDataJson = gson.toJson(evaluateTestOutputData);
+                                    timelineLogger.logQuizSubmitted(courseUuid, contentId, numQuestions, score, evaluationDataJson);
+                                }
+                            }
+                        } catch (Exception e) {
+                            // Don't break the flow if Timeline logging fails
+                        }
+                    }
+                    
+                    @Override
+                    public void presentLoading() {
+                        originalEvalPresenter.presentLoading();
+                    }
+                    
+                    @Override
+                    public void presentError(String errorMessage) {
+                        originalEvalPresenter.presentError(errorMessage);
+                    }
+                };
 
         // The Interactor for the evaluation use case. It correctly uses the DAOs.
         EvaluateTestInteractor evalInteractor = new EvaluateTestInteractor(courseDAO, getGeminiDAO(), evalPresenter);
@@ -135,14 +233,14 @@ public class AppBuilder {
         EvaluateTestController evalController = new EvaluateTestController(evalInteractor);
 
         // The Presenter for the WriteTestView's navigation (next/prev question).
-        MockTestPresenter mockTestPresenter = new MockTestPresenter(mockTestViewModel, viewManagerModel, loadingViewModel, timelineLogger);
+        MockTestPresenter mockTestPresenter = new MockTestPresenter(mockTestViewModel, viewManagerModel, loadingViewModel);
 
         // Inject both the controller (for submitting) and the presenter (for navigation) into the WriteTestView.
         writeTestView.setController(evalController);
         writeTestView.setPresenter(mockTestPresenter);
 
-        // Inject the presenter into the EvaluateTestView
-        evaluateTestView.setPresenter(evalPresenter);
+        // Inject the presenter into the EvaluateTestView (needs concrete type, not interface)
+        evaluateTestView.setPresenter(originalEvalPresenter);
 
         return this;
     }
@@ -157,10 +255,38 @@ public class AppBuilder {
         usecases.lecturenotes.CourseLookupGateway courseGateway =
                 new data_access.HardCodedCourseLookup();
 
-        // 2) presenter
-        interface_adapters.lecturenotes.GenerateLectureNotesPresenter presenter =
+        // 2) presenter (wrapped with Timeline logging)
+        interface_adapters.lecturenotes.GenerateLectureNotesPresenter originalPresenter =
                 new interface_adapters.lecturenotes.GenerateLectureNotesPresenter(
-                        this.lectureNotesViewModel, this.viewManagerModel, this.timelineLogger);
+                        this.lectureNotesViewModel, this.viewManagerModel);
+        
+        // Wrap presenter to add Timeline logging
+        usecases.lecturenotes.GenerateLectureNotesOutputBoundary presenter =
+                new usecases.lecturenotes.GenerateLectureNotesOutputBoundary() {
+                    @Override
+                    public void prepareSuccessView(usecases.lecturenotes.GenerateLectureNotesOutputData outputData) {
+                        originalPresenter.prepareSuccessView(outputData);
+                        
+                        // Log to Timeline
+                        try {
+                            UUID courseUuid = CourseIdMapper.getUuidForCourseId(outputData.getCourseId());
+                            UUID contentId = UUID.randomUUID();
+                            String title = outputData.getTopic();
+                            String notesText = outputData.getNotesText();
+                            String snippet = notesText != null && notesText.length() > 100 
+                                    ? notesText.substring(0, 100) + "..." 
+                                    : notesText;
+                            timelineLogger.logNotesGenerated(courseUuid, contentId, title, snippet, notesText);
+                        } catch (Exception e) {
+                            // Don't break the flow if Timeline logging fails
+                        }
+                    }
+                    
+                    @Override
+                    public void prepareFailView(String error) {
+                        originalPresenter.prepareFailView(error);
+                    }
+                };
 
         // 3) interactor
         usecases.lecturenotes.GenerateLectureNotesInteractor interactor =
@@ -346,13 +472,49 @@ public class AppBuilder {
         // Create the flashcard generator (using Gemini API)
         GeminiFlashcardGenerator generator = new GeminiFlashcardGenerator();
 
-        // Create the presenter
-        GenerateFlashcardsPresenter presenter =
-                new GenerateFlashcardsPresenter(flashcardViewModel, viewManagerModel, timelineLogger);
-
-        // Create the interactor
-        GenerateFlashcardsInteractor interactor =
-                new GenerateFlashcardsInteractor(generator, presenter);
+        // Create the original presenter
+        GenerateFlashcardsPresenter originalPresenter =
+                new GenerateFlashcardsPresenter(flashcardViewModel, viewManagerModel);
+        
+        // Wrap presenter to add Timeline logging
+        // Use a final array to capture courseName from the interactor wrapper
+        final String[] capturedCourseName = new String[1];
+        
+        GenerateFlashcardsOutputBoundary presenter =
+                new GenerateFlashcardsOutputBoundary() {
+                    @Override
+                    public void presentFlashcards(GenerateFlashcardsResponseModel responseModel) {
+                        originalPresenter.presentFlashcards(responseModel);
+                        
+                        // Log to Timeline
+                        try {
+                            if (capturedCourseName[0] != null && !capturedCourseName[0].isEmpty()) {
+                                UUID courseUuid = CourseIdMapper.getUuidForCourseId(capturedCourseName[0]);
+                                UUID contentId = UUID.randomUUID();
+                                entities.FlashcardSet set = responseModel.getFlashcardSet();
+                                int numCards = set != null ? set.size() : 0;
+                                timelineLogger.logFlashcardsGenerated(courseUuid, contentId, numCards, set);
+                            }
+                        } catch (Exception e) {
+                            // Don't break the flow if Timeline logging fails
+                        }
+                    }
+                    
+                    @Override
+                    public void presentError(String message) {
+                        originalPresenter.presentError(message);
+                    }
+                };
+        
+        // Wrap interactor to capture courseName
+        GenerateFlashcardsInputBoundary interactor =
+                new GenerateFlashcardsInputBoundary() {
+                    @Override
+                    public void execute(String courseName, String content) {
+                        capturedCourseName[0] = courseName;
+                        new GenerateFlashcardsInteractor(generator, presenter).execute(courseName, content);
+                    }
+                };
 
         // Create the controller
         GenerateFlashcardsController controller =

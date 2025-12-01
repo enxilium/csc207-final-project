@@ -2,7 +2,7 @@ package Timeline;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import usecases.Timeline.InMemoryTimelineRepository;
+import data_access.InMemoryTimelineRepository;
 import usecases.Timeline.TimelineEvent;
 import usecases.Timeline.TimelineEventType;
 

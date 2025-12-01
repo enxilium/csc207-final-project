@@ -7,10 +7,10 @@ import interface_adapters.evaluate_test.EvaluateTestViewModel;
 import interface_adapters.mock_test.MockTestViewModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import usecases.Timeline.TimelineController;
+import interface_adapters.timeline.TimelineController;
 import usecases.Timeline.ViewTimelineResponse;
-import usecases.Timeline.ViewTimelineView;
-import usecases.Timeline.ViewTimelineViewModel;
+import views.ViewTimelineView;
+import interface_adapters.timeline.ViewTimelineViewModel;
 
 import javax.swing.*;
 import java.awt.*;

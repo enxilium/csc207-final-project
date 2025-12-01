@@ -2,8 +2,6 @@ package usecases.Timeline;
 
 import com.google.gson.Gson;
 import entities.FlashcardSet;
-import usecases.mock_test_generation.MockTestGenerationOutputData;
-import usecases.evaluate_test.EvaluateTestOutputData;
 
 import java.util.UUID;
 
@@ -32,21 +30,21 @@ public class TimelineLogger {
         repo.save(e);
     }
 
-    public void logQuizGenerated(UUID courseId, UUID contentId, int numQuestions, MockTestGenerationOutputData testData) {
+    public void logQuizGenerated(UUID courseId, UUID contentId, int numQuestions, String testDataJson) {
         var e = new TimelineEvent(courseId, contentId, TimelineEventType.QUIZ_GENERATED);
         e.setNumQuestions(numQuestions);
-        if (testData != null) {
-            e.setTestData(gson.toJson(testData));
+        if (testDataJson != null && !testDataJson.isEmpty()) {
+            e.setTestData(testDataJson);
         }
         repo.save(e);
     }
 
-    public void logQuizSubmitted(UUID courseId, UUID contentId, int numQuestions, double score, EvaluateTestOutputData evaluationData) {
+    public void logQuizSubmitted(UUID courseId, UUID contentId, int numQuestions, double score, String evaluationDataJson) {
         var e = new TimelineEvent(courseId, contentId, TimelineEventType.QUIZ_SUBMITTED);
         e.setNumQuestions(numQuestions);
         e.setScore(score);
-        if (evaluationData != null) {
-            e.setEvaluationData(gson.toJson(evaluationData));
+        if (evaluationDataJson != null && !evaluationDataJson.isEmpty()) {
+            e.setEvaluationData(evaluationDataJson);
         }
         repo.save(e);
     }

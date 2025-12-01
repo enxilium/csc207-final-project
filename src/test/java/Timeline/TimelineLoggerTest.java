@@ -74,8 +74,8 @@ class TimelineLoggerTest {
     @Test
     void testLogQuizGenerated() {
         UUID contentId = UUID.randomUUID();
-        usecases.mock_test_generation.MockTestGenerationOutputData testData = null;
-        logger.logQuizGenerated(courseId, contentId, 10, testData);
+        String testDataJson = null;
+        logger.logQuizGenerated(courseId, contentId, 10, testDataJson);
 
         List<TimelineEvent> events = repository.findByCourseNewestFirst(courseId);
         assertEquals(1, events.size());
@@ -89,7 +89,7 @@ class TimelineLoggerTest {
     @Test
     void testLogQuizGeneratedWithTestData() {
         UUID contentId = UUID.randomUUID();
-        // Create a non-null testData to cover the true branch of line 38
+        // Create a non-null testData to cover the true branch
         java.util.List<String> questions = new java.util.ArrayList<>();
         questions.add("Question 1");
         java.util.List<String> answers = new java.util.ArrayList<>();
@@ -101,7 +101,10 @@ class TimelineLoggerTest {
         usecases.mock_test_generation.MockTestGenerationOutputData testData = 
             new usecases.mock_test_generation.MockTestGenerationOutputData(testDataEntity, "CSC207", choices);
         
-        logger.logQuizGenerated(courseId, contentId, 10, testData);
+        // Serialize to JSON (as would be done in AppBuilder)
+        com.google.gson.Gson gson = new com.google.gson.Gson();
+        String testDataJson = gson.toJson(testData);
+        logger.logQuizGenerated(courseId, contentId, 10, testDataJson);
 
         List<TimelineEvent> events = repository.findByCourseNewestFirst(courseId);
         assertEquals(1, events.size());
@@ -116,8 +119,8 @@ class TimelineLoggerTest {
     @Test
     void testLogQuizSubmitted() {
         UUID contentId = UUID.randomUUID();
-        usecases.evaluate_test.EvaluateTestOutputData evaluationData = null;
-        logger.logQuizSubmitted(courseId, contentId, 10, 8.5, evaluationData);
+        String evaluationDataJson = null;
+        logger.logQuizSubmitted(courseId, contentId, 10, 8.5, evaluationDataJson);
 
         List<TimelineEvent> events = repository.findByCourseNewestFirst(courseId);
         assertEquals(1, events.size());
@@ -132,7 +135,7 @@ class TimelineLoggerTest {
     @Test
     void testLogQuizSubmittedWithEvaluationData() {
         UUID contentId = UUID.randomUUID();
-        // Create a non-null evaluationData to cover the true branch of line 48 and line 49
+        // Create a non-null evaluationData to cover the true branch
         java.util.List<String> questions = new java.util.ArrayList<>();
         questions.add("Question 1");
         java.util.List<String> answers = new java.util.ArrayList<>();
@@ -147,7 +150,10 @@ class TimelineLoggerTest {
         usecases.evaluate_test.EvaluateTestOutputData evaluationData = 
             new usecases.evaluate_test.EvaluateTestOutputData(evalData);
         
-        logger.logQuizSubmitted(courseId, contentId, 10, 8.5, evaluationData);
+        // Serialize to JSON (as would be done in AppBuilder)
+        com.google.gson.Gson gson = new com.google.gson.Gson();
+        String evaluationDataJson = gson.toJson(evaluationData);
+        logger.logQuizSubmitted(courseId, contentId, 10, 8.5, evaluationDataJson);
 
         List<TimelineEvent> events = repository.findByCourseNewestFirst(courseId);
         assertEquals(1, events.size());
@@ -168,7 +174,7 @@ class TimelineLoggerTest {
 
         logger.logNotesGenerated(courseId, notesId, "Notes", "Snippet", "Full notes");
         logger.logFlashcardsGenerated(courseId, cardsId, 20, new entities.FlashcardSet("Test Course", new java.util.ArrayList<>()));
-        logger.logQuizGenerated(courseId, quizId, 15, null);
+        logger.logQuizGenerated(courseId, quizId, 15, (String) null);
 
         List<TimelineEvent> events = repository.findByCourseNewestFirst(courseId);
         assertEquals(3, events.size());

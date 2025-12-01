@@ -1,4 +1,6 @@
-package usecases.Timeline;
+package interface_adapters.timeline;
+
+import usecases.Timeline.ViewTimelineInputBoundary;
 
 import java.util.UUID;
 
@@ -13,3 +15,4 @@ public class TimelineController {
         interactor.execute(courseId);
     }
 }
+

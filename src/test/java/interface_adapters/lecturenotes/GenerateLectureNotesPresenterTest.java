@@ -1,16 +1,14 @@
 package interface_adapters.lecturenotes;
 
-import usecases.Timeline.TimelineLogger;
-import usecases.Timeline.InMemoryTimelineRepository;
 import interface_adapters.ViewManagerModel;
+import interface_adapters.lecturenotes.LectureNotesState;
 import org.junit.jupiter.api.Test;
 import usecases.lecturenotes.GenerateLectureNotesOutputData;
 
-import static org.junit.jupiter.api.Assertions.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class GenerateLectureNotesPresenterTest {
 
@@ -28,9 +26,8 @@ public class GenerateLectureNotesPresenterTest {
         initialState.setLoading(true);
         viewModel.setState(initialState);
 
-        TimelineLogger timelineLogger = new TimelineLogger(new InMemoryTimelineRepository());
         GenerateLectureNotesPresenter presenter =
-                new GenerateLectureNotesPresenter(viewModel, viewManagerModel, timelineLogger);
+                new GenerateLectureNotesPresenter(viewModel, viewManagerModel);
 
         GenerateLectureNotesOutputData outputData =
                 new GenerateLectureNotesOutputData(
@@ -41,9 +38,6 @@ public class GenerateLectureNotesPresenterTest {
 
         // Act: call the presenter
         presenter.prepareSuccessView(outputData);
-                new GenerateLectureNotesOutputData("CSC207", "Recursion", "Generated notes");
-
-        presenter.prepareSuccessView(outputData);
 
         // Assert: view manager switches to the lecture-notes view
         assertEquals(viewModel.getViewName(), viewManagerModel.getState());
@@ -52,7 +46,7 @@ public class GenerateLectureNotesPresenterTest {
 
         assertEquals("CSC207", readString(state, "getCourseId", "courseId"));
         assertEquals("Recursion", readString(state, "getTopic", "topic"));
-        assertEquals("Generated notes", readString(state, "getNotesText", "getContent", "notesText", "content"));
+        assertEquals("Generated notes for recursion", readString(state, "getNotesText", "getContent", "notesText", "content"));
 
         Boolean loading = readNullableBoolean(state, "isLoading", "getLoading", "loading");
         if (loading != null) {
@@ -80,9 +74,8 @@ public class GenerateLectureNotesPresenterTest {
         // Record current view BEFORE calling fail view (no need to set it).
         String beforeView = readNullableString(viewManagerModel, "getState", "state");
 
-        TimelineLogger timelineLogger = new TimelineLogger(new InMemoryTimelineRepository());
         GenerateLectureNotesPresenter presenter =
-                new GenerateLectureNotesPresenter(viewModel, viewManagerModel, timelineLogger);
+                new GenerateLectureNotesPresenter(viewModel, viewManagerModel);
 
         presenter.prepareFailView("Course not found");
 
@@ -189,10 +182,6 @@ public class GenerateLectureNotesPresenterTest {
         return null;
     }
 
-        // We do NOT expect the active view to change here,
-        // so we simply check that the state is not equal to the lecture notes view name.
-        // (If your design expects a switch, you can change this assertion.)
-        assertNotEquals(viewModel.getViewName(), viewManagerModel.getState());
     private static String readStaticString(Class<?> clazz, String fieldName) {
         try {
             Field f = clazz.getDeclaredField(fieldName);

@@ -2,22 +2,47 @@ package interface_adapters.file_management;
 
 import usecases.file_management.FileManagementInputBoundary;
 
+/**
+ * Controller for the file management use case.
+ */
 public class FileManagementController {
-    private final FileManagementInputBoundary fileManagementInteractor;
+  private final FileManagementInputBoundary fileManagementInteractor;
 
-    public FileManagementController(FileManagementInputBoundary fileManagementInteractor) {
-        this.fileManagementInteractor = fileManagementInteractor;
-    }
+  /**
+   * Constructs a FileManagementController with the given input boundary.
+   *
+   * @param fileManagementInteractor the interactor for file management operations
+   */
+  public FileManagementController(FileManagementInputBoundary fileManagementInteractor) {
+    this.fileManagementInteractor = fileManagementInteractor;
+  }
 
-    public void uploadFile(String courseId, String filePath) {
-        fileManagementInteractor.uploadFile(courseId, filePath);
-    }
+  /**
+   * Uploads a file to a course.
+   *
+   * @param courseId the course ID
+   * @param filePath the path to the file to upload
+   */
+  public void uploadFile(String courseId, String filePath) {
+    fileManagementInteractor.uploadFile(courseId, filePath);
+  }
 
-    public void viewFiles(String courseId) {
-        fileManagementInteractor.viewFiles(courseId);
-    }
+  /**
+   * Views files for a course.
+   *
+   * @param courseId the course ID
+   */
+  public void viewFiles(String courseId) {
+    fileManagementInteractor.viewFiles(courseId);
+  }
 
-    public void deleteFile(String courseId, String filePath) {
-        fileManagementInteractor.deleteFile(courseId, filePath);
-    }
+  /**
+   * Deletes a file from a course.
+   *
+   * @param courseId the course ID
+   * @param filePath the path to the file to delete
+   */
+  public void deleteFile(String courseId, String filePath) {
+    fileManagementInteractor.deleteFile(courseId, filePath);
+  }
 }

@@ -1,22 +1,44 @@
 package interface_adapters.workspace;
 
-import entities.*;
+import entities.Course;
 
+/**
+ * State class for course workspace and edit view models.
+ */
 public class CourseState {
-    private Course course;
-    private String error;
+  private Course course;
+  private String error;
 
-    public CourseState(){
-    }
+  /**
+   * Constructs a new CourseState.
+   */
+  public CourseState() {
+  }
 
-    public Course getCourse(){
-        return this.course;
-    }
-    public void setCourse(Course course){
-        this.course = course;
-    }
+  /**
+   * Gets the course.
+   *
+   * @return the course
+   */
+  public Course getCourse() {
+    return this.course;
+  }
 
-    public void setError(String error) {
-        this.error = error;
-    }
+  /**
+   * Sets the course.
+   *
+   * @param course the course to set
+   */
+  public void setCourse(Course course) {
+    this.course = course;
+  }
+
+  /**
+   * Sets the error message.
+   *
+   * @param error the error message to set
+   */
+  public void setError(String error) {
+    this.error = error;
+  }
 }

@@ -7,13 +7,23 @@ import entities.FlashcardSet;
  * before sending it to the presenter.
  */
 public class GenerateFlashcardsResponseModel {
-    private final FlashcardSet flashcardSet;
+  private final FlashcardSet flashcardSet;
 
-    public GenerateFlashcardsResponseModel(FlashcardSet flashcardSet) {
-        this.flashcardSet = flashcardSet;
-    }
+  /**
+   * Constructs a GenerateFlashcardsResponseModel with the given flashcard set.
+   *
+   * @param flashcardSet the flashcard set to wrap
+   */
+  public GenerateFlashcardsResponseModel(FlashcardSet flashcardSet) {
+    this.flashcardSet = flashcardSet;
+  }
 
-    public FlashcardSet getFlashcardSet() {
-        return flashcardSet;
-    }
+  /**
+   * Gets the flashcard set.
+   *
+   * @return the flashcard set
+   */
+  public FlashcardSet getFlashcardSet() {
+    return flashcardSet;
+  }
 }

@@ -5,6 +5,17 @@ package usecases;
  * Defines how results and errors are presented to the user or console.
  */
 public interface GenerateFlashcardsOutputBoundary {
-    void presentFlashcards(GenerateFlashcardsResponseModel responseModel);
-    void presentError(String message);
+  /**
+   * Presents the generated flashcards to the user.
+   *
+   * @param responseModel the response model containing the flashcards
+   */
+  void presentFlashcards(GenerateFlashcardsResponseModel responseModel);
+
+  /**
+   * Presents an error message to the user.
+   *
+   * @param message the error message
+   */
+  void presentError(String message);
 }

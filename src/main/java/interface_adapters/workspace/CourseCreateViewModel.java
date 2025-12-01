@@ -1,10 +1,16 @@
 package interface_adapters.workspace;
-import interface_adapters.*;
 
+import interface_adapters.ViewModel;
 
-public class CourseCreateViewModel extends ViewModel<CourseState>{
-    public CourseCreateViewModel() {
-        super("createCourse");
-        setState(new CourseState());
-    }
+/**
+ * View model for the course creation view.
+ */
+public class CourseCreateViewModel extends ViewModel<CourseState> {
+  /**
+   * Constructs a new CourseCreateViewModel.
+   */
+  public CourseCreateViewModel() {
+    super("createCourse");
+    setState(new CourseState());
+  }
 }

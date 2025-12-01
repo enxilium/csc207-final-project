@@ -1,164 +1,202 @@
 package views;
 
+import entities.PDFFile;
+import interface_adapters.ViewManagerModel;
 import interface_adapters.file_management.FileManagementController;
 import interface_adapters.file_management.FileManagementState;
 import interface_adapters.file_management.FileManagementViewModel;
-import interface_adapters.ViewManagerModel;
-import entities.PDFFile;
-
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.SwingConstants;
+import javax.swing.border.EmptyBorder;
 
+/**
+ * View for managing PDF files for a course.
+ */
 public class FileManagementView extends JPanel implements PropertyChangeListener {
-    private final String viewName = "fileManagement";
-    private final FileManagementViewModel viewModel;
-    private FileManagementController controller;
-    private ViewManagerModel viewManagerModel;
-    private JPanel fileListPanel;
-    private JLabel errorLabel;
-    private String currentCourseId;
+  private final String viewName = "fileManagement";
+  private final FileManagementViewModel viewModel;
+  private FileManagementController controller;
+  private ViewManagerModel viewManagerModel;
+  private JPanel fileListPanel;
+  private JLabel errorLabel;
+  private String currentCourseId;
 
-    public FileManagementView(FileManagementViewModel viewModel) {
-        this.viewModel = viewModel;
-        this.viewModel.addPropertyChangeListener(this);
+  /**
+   * Constructs a FileManagementView with the given view model.
+   *
+   * @param viewModel the file management view model
+   */
+  public FileManagementView(FileManagementViewModel viewModel) {
+    this.viewModel = viewModel;
+    this.viewModel.addPropertyChangeListener(this);
 
-        this.setPreferredSize(new Dimension(1200, 800));
-        this.setBackground(Color.LIGHT_GRAY);
-        this.setBorder(new EmptyBorder(20, 20, 20, 20));
-        this.setLayout(new BorderLayout());
+    this.setPreferredSize(new Dimension(1200, 800));
+    this.setBackground(Color.LIGHT_GRAY);
+    this.setBorder(new EmptyBorder(20, 20, 20, 20));
+    this.setLayout(new BorderLayout());
 
-        // Top panel with title
-        JPanel topPanel = new JPanel();
-        topPanel.setBackground(Color.LIGHT_GRAY);
-        topPanel.add(new JLabel("File Management"));
-        this.add(topPanel, BorderLayout.NORTH);
+    // Top panel with title
+    JPanel topPanel = new JPanel();
+    topPanel.setBackground(Color.LIGHT_GRAY);
+    topPanel.add(new JLabel("File Management"));
+    this.add(topPanel, BorderLayout.NORTH);
 
-        // Center panel for file list
-        fileListPanel = new JPanel();
-        fileListPanel.setLayout(new BoxLayout(fileListPanel, BoxLayout.Y_AXIS));
-        fileListPanel.setBackground(Color.WHITE);
-        JScrollPane scrollPane = new JScrollPane(fileListPanel);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        this.add(scrollPane, BorderLayout.CENTER);
+    // Center panel for file list
+    fileListPanel = new JPanel();
+    fileListPanel.setLayout(new BoxLayout(fileListPanel, BoxLayout.Y_AXIS));
+    fileListPanel.setBackground(Color.WHITE);
+    JScrollPane scrollPane = new JScrollPane(fileListPanel);
+    scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+    this.add(scrollPane, BorderLayout.CENTER);
 
-        // Error label
-        errorLabel = new JLabel();
-        errorLabel.setForeground(Color.RED);
-        errorLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    // Error label
+    errorLabel = new JLabel();
+    errorLabel.setForeground(Color.RED);
+    errorLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
-        // Bottom panel with buttons
-        JPanel bottomPanel = new JPanel();
-        bottomPanel.setBackground(Color.DARK_GRAY);
+    // Bottom panel with buttons
+    JPanel bottomPanel = new JPanel();
+    bottomPanel.setBackground(Color.DARK_GRAY);
 
-        JButton returnButton = new JButton("Return");
-        returnButton.setPreferredSize(new Dimension(120, 30));
-        returnButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (viewManagerModel != null) {
-                    viewManagerModel.setState("workspace");
-                    viewManagerModel.firePropertyChange();
-                }
+    JButton returnButton = new JButton("Return");
+    returnButton.setPreferredSize(new Dimension(120, 30));
+    returnButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (viewManagerModel != null) {
+          viewManagerModel.setState("workspace");
+          viewManagerModel.firePropertyChange();
+        }
+      }
+    });
+    bottomPanel.add(returnButton);
+
+    // South container: error label + buttons
+    JPanel southPanel = new JPanel(new BorderLayout());
+    southPanel.setBackground(Color.LIGHT_GRAY);
+
+    southPanel.add(errorLabel, BorderLayout.CENTER);
+    southPanel.add(bottomPanel, BorderLayout.SOUTH);
+
+    this.add(southPanel, BorderLayout.SOUTH);
+  }
+
+  @Override
+  public void propertyChange(PropertyChangeEvent evt) {
+    if (evt.getPropertyName().equals("state")) {
+      FileManagementState state = (FileManagementState) evt.getNewValue();
+      currentCourseId = state.getCourseId();
+
+      // Clear error
+      errorLabel.setText("");
+
+      // Display error if any
+      if (state.getError() != null && !state.getError().isEmpty()) {
+        errorLabel.setText("Error: " + state.getError());
+      }
+
+      // Update file list
+      updateFileList(state.getFiles());
+    }
+  }
+
+  /**
+   * Updates the file list display.
+   *
+   * @param files the list of PDF files to display
+   */
+  private void updateFileList(List<PDFFile> files) {
+    fileListPanel.removeAll();
+
+    if (files == null || files.isEmpty()) {
+      JLabel noFilesLabel = new JLabel("No files uploaded yet.");
+      noFilesLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+      fileListPanel.add(noFilesLabel);
+    } else {
+      for (PDFFile file : files) {
+        JPanel fileItemPanel = new JPanel(new BorderLayout());
+        fileItemPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 1, 0, Color.GRAY),
+            new EmptyBorder(10, 10, 10, 10)
+        ));
+        fileItemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+        fileItemPanel.setBackground(Color.WHITE);
+
+        // File name label
+        String fileName = file.getPath().getFileName().toString();
+        JLabel fileNameLabel = new JLabel(fileName);
+        fileNameLabel.setFont(new Font(fileNameLabel.getFont().getName(), Font.PLAIN, 14));
+        fileItemPanel.add(fileNameLabel, BorderLayout.CENTER);
+
+        // Delete button
+        JButton deleteButton = new JButton("Delete");
+        deleteButton.setPreferredSize(new Dimension(80, 30));
+        deleteButton.addActionListener(new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            if (controller != null && currentCourseId != null) {
+              int confirm = JOptionPane.showConfirmDialog(
+                  FileManagementView.this,
+                  "Are you sure you want to delete " + fileName + "?",
+                  "Confirm Delete",
+                  JOptionPane.YES_NO_OPTION
+              );
+              if (confirm == JOptionPane.YES_OPTION) {
+                controller.deleteFile(currentCourseId, file.getPath().toString());
+              }
             }
+          }
         });
-        bottomPanel.add(returnButton);
+        fileItemPanel.add(deleteButton, BorderLayout.EAST);
 
-// South container: error label + buttons
-        JPanel southPanel = new JPanel(new BorderLayout());
-        southPanel.setBackground(Color.LIGHT_GRAY);
-
-        southPanel.add(errorLabel, BorderLayout.CENTER);
-        southPanel.add(bottomPanel, BorderLayout.SOUTH);
-
-        this.add(southPanel, BorderLayout.SOUTH);
+        fileListPanel.add(fileItemPanel);
+      }
     }
 
-    @Override
-    public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getPropertyName().equals("state")) {
-            FileManagementState state = (FileManagementState) evt.getNewValue();
-            currentCourseId = state.getCourseId();
+    fileListPanel.revalidate();
+    fileListPanel.repaint();
+  }
 
-            // Clear error
-            errorLabel.setText("");
+  /**
+   * Sets the controller for this view.
+   *
+   * @param controller the file management controller
+   */
+  public void setController(FileManagementController controller) {
+    this.controller = controller;
+  }
 
-            // Display error if any
-            if (state.getError() != null && !state.getError().isEmpty()) {
-                errorLabel.setText("Error: " + state.getError());
-            }
+  /**
+   * Sets the view manager model for this view.
+   *
+   * @param viewManagerModel the view manager model
+   */
+  public void setViewManagerModel(ViewManagerModel viewManagerModel) {
+    this.viewManagerModel = viewManagerModel;
+  }
 
-            // Update file list
-            updateFileList(state.getFiles());
-        }
-    }
-
-    private void updateFileList(List<PDFFile> files) {
-        fileListPanel.removeAll();
-
-        if (files == null || files.isEmpty()) {
-            JLabel noFilesLabel = new JLabel("No files uploaded yet.");
-            noFilesLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-            fileListPanel.add(noFilesLabel);
-        } else {
-            for (PDFFile file : files) {
-                JPanel fileItemPanel = new JPanel(new BorderLayout());
-                fileItemPanel.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createMatteBorder(0, 0, 1, 0, Color.GRAY),
-                        new EmptyBorder(10, 10, 10, 10)
-                ));
-                fileItemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
-                fileItemPanel.setBackground(Color.WHITE);
-
-                // File name label
-                String fileName = file.getPath().getFileName().toString();
-                JLabel fileNameLabel = new JLabel(fileName);
-                fileNameLabel.setFont(new Font(fileNameLabel.getFont().getName(), Font.PLAIN, 14));
-                fileItemPanel.add(fileNameLabel, BorderLayout.CENTER);
-
-                // Delete button
-                JButton deleteButton = new JButton("Delete");
-                deleteButton.setPreferredSize(new Dimension(80, 30));
-                deleteButton.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        if (controller != null && currentCourseId != null) {
-                            int confirm = JOptionPane.showConfirmDialog(
-                                    FileManagementView.this,
-                                    "Are you sure you want to delete " + fileName + "?",
-                                    "Confirm Delete",
-                                    JOptionPane.YES_NO_OPTION
-                            );
-                            if (confirm == JOptionPane.YES_OPTION) {
-                                controller.deleteFile(currentCourseId, file.getPath().toString());
-                            }
-                        }
-                    }
-                });
-                fileItemPanel.add(deleteButton, BorderLayout.EAST);
-
-                fileListPanel.add(fileItemPanel);
-            }
-        }
-
-        fileListPanel.revalidate();
-        fileListPanel.repaint();
-    }
-
-    public void setController(FileManagementController controller) {
-        this.controller = controller;
-    }
-
-    public void setViewManagerModel(ViewManagerModel viewManagerModel) {
-        this.viewManagerModel = viewManagerModel;
-    }
-
-    public String getViewName() {
-        return viewName;
-    }
+  /**
+   * Gets the view name.
+   *
+   * @return the view name
+   */
+  public String getViewName() {
+    return viewName;
+  }
 }

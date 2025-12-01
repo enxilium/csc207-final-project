@@ -628,10 +628,23 @@ public class AppBuilder {
         JFrame application = new JFrame("StudyFlow AI Assistant");
         application.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         application.add(cardPanel);
+
+        // Make CardLayout follow the ViewManagerModel state
+        viewManagerModel.addPropertyChangeListener(evt -> {
+            if (!"state".equals(evt.getPropertyName())) {
+                return;
+            }
+            String targetView = (String) evt.getNewValue();
+            if (targetView == null || targetView.isEmpty()) {
+                return;
+            }
+            cardLayout.show(cardPanel, targetView);
+            cardPanel.revalidate();
+            cardPanel.repaint();
+        });
+
+        // Render dashboard and show it as the initial view
         this.courseDashboardView.renderDashboard();
-
-
-        // Set the initial view
         viewManagerModel.setState(this.courseDashboardView.getViewName());
         viewManagerModel.firePropertyChange();
 

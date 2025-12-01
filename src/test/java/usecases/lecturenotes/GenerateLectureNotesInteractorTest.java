@@ -3,14 +3,14 @@ package usecases.lecturenotes;
 
 import entities.Course;
 import entities.LectureNotes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class GenerateLectureNotesInteractorTest {
 

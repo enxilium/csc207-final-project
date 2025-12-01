@@ -1,3 +1,59 @@
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+.github/**
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Local notes and archives
+notes/
+*.zip
+
+# Environment variables
+.env
+.env.local
+
+# Timeline data files (generated at runtime)
+timeline.json
+course_id_mappings.json
+
+# Setup documentation (local only)
+API_KEY_SETUP.md
+run.sh
+
+# Demo files
+**/TimelineSwingDemo.java
 # Compiled class files
 *.class
 

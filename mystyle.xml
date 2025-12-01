@@ -47,11 +47,6 @@
         <property name="offCommentFormat" value="CSOFF\: .*"/>
         <property name="onCommentFormat" value="CSON\: .*"/>
     </module>
-    <module name="SuppressWithNearbyTextFilter">
-        <property name="nearbyTextPattern" value='name=\"message\"'/>
-        <property name="lineRange" value="1"/>
-        <property name="idPattern" value="lineLengthXml"/>
-    </module>
 
     <!-- Headers -->
 
@@ -589,7 +584,6 @@
             <property name="checkFormat" value="$1"/>
             <property name="influenceFormat" value="3"/>
         </module>
-
         <!-- Imports -->
         <module name="AvoidStarImport"/>
         <module name="AvoidStaticImport"/>

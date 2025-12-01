@@ -20,5 +20,5 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Run Checkstyle with custom config
-        run: mvn -B checkstyle:check -Dcheckstyle.config.location=mystyle.xml
+      - name: Run Checkstyle
+        run: mvn -B checkstyle:check

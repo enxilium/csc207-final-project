@@ -51,7 +51,6 @@ public class FileManagementView extends JPanel implements PropertyChangeListener
         errorLabel = new JLabel();
         errorLabel.setForeground(Color.RED);
         errorLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        this.add(errorLabel, BorderLayout.SOUTH);
 
         // Bottom panel with buttons
         JPanel bottomPanel = new JPanel();
@@ -69,7 +68,15 @@ public class FileManagementView extends JPanel implements PropertyChangeListener
             }
         });
         bottomPanel.add(returnButton);
-        this.add(bottomPanel, BorderLayout.SOUTH);
+
+// South container: error label + buttons
+        JPanel southPanel = new JPanel(new BorderLayout());
+        southPanel.setBackground(Color.LIGHT_GRAY);
+
+        southPanel.add(errorLabel, BorderLayout.CENTER);
+        southPanel.add(bottomPanel, BorderLayout.SOUTH);
+
+        this.add(southPanel, BorderLayout.SOUTH);
     }
 
     @Override

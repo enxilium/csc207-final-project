@@ -1,6 +1,5 @@
 package usecases.lecturenotes;
 
-
 import entities.Course;
 import entities.LectureNotes;
 
@@ -25,7 +24,7 @@ public class GenerateLectureNotesInteractor implements GenerateLectureNotesInput
 
         Course course = courseGateway.getCourseById(courseId);
 
-        // If course not found, fail early
+        // If the course does not exist, do NOT call the notes gateway.
         if (course == null) {
             presenter.prepareFailView("Course not found: " + courseId);
             return;
@@ -34,15 +33,16 @@ public class GenerateLectureNotesInteractor implements GenerateLectureNotesInput
         try {
             LectureNotes lectureNotes = notesGateway.generateNotes(course, topic);
 
+            // Your OutputData constructor expects 3 args: (courseId, topic, notesText/content)
             GenerateLectureNotesOutputData outputData = new GenerateLectureNotesOutputData(
                     lectureNotes.getCourseId(),
                     lectureNotes.getTopic(),
                     lectureNotes.getContent()
             );
+
             presenter.prepareSuccessView(outputData);
 
-        } catch (NotesGenerationException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
             presenter.prepareFailView("Failed to generate lecture notes. Please try again.");
         }
     }

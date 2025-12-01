@@ -1,24 +1,20 @@
 package app;
 
 import javax.swing.*;
+import java.awt.*;
+import views.*;
 
 public class Main {
     public static void main(String[] args) {
-        // Set look and feel for better UI
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception e) {
-            // If setting look and feel fails, continue with default
-        }
+        // The AppBuilder holds all the state and wiring logic.
+        AppBuilder appBuilder = new AppBuilder();
 
-        // Build the application using the AppBuilder
-        JFrame application = new AppBuilder()
-                // === Core Views ===
+        // Chain the building methods to construct the application piece by piece.
+        JFrame application = appBuilder
+                .addLoadingView()
                 .addWriteTestView()
                 .addEvaluateTestView()
-                .addLoadingView()
-
-                // === Course Management Views ===
+                .addLectureNotesView()
                 .addCourseDashboardView()
                 .addCourseWorkspaceView()
                 .addCourseCreateView()
@@ -30,16 +26,13 @@ public class Main {
                 // === Use Cases ===
                 .addMockTestGenerationUseCase()
                 .addEvaluateTestUseCase()
+                .addFlashcardGenerationUseCase()
+                .addLectureNotesUseCase()
                 .addCourseUseCases()
-
-                // === Flashcard Use Case ===
-                .addFlashcardGenerationUseCase()  // Wire up flashcard logic
-
-                // === Build ===
                 .build();
 
-        // Display the application
         application.pack();
+        application.setLocationRelativeTo(null); // Center the window
         application.setVisible(true);
     }
 }

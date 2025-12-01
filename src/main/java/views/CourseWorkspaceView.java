@@ -28,6 +28,7 @@ public class CourseWorkspaceView extends JPanel implements ActionListener, Prope
     private String courseId = null;
     private ViewManager viewManager = null;
     private CourseWorkspaceViewModel courseWorkspaceViewModel = null;
+    private Runnable openLectureNotesAction = null;
     private JButton flashcardButton;
     private GenerateFlashcardsController flashcardsController;
 
@@ -93,11 +94,13 @@ public class CourseWorkspaceView extends JPanel implements ActionListener, Prope
         JButton noteButton = new JButton("Existing Notes");
         noteButton.setPreferredSize(new Dimension(140, 30));
         bottomPanel.add(noteButton);
+        noteButton.addActionListener(e -> { if (openLectureNotesAction != null) openLectureNotesAction.run(); });
 
         //create note
         JButton createNoteButton = new JButton("Create Note");
         createNoteButton.setPreferredSize(new Dimension(140, 30));
         bottomPanel.add(createNoteButton);
+        createNoteButton.addActionListener(e -> { if (openLectureNotesAction != null) openLectureNotesAction.run(); });
 
         //open flash card
         JButton flashCardButton = new JButton("Existing Flashcards");
@@ -184,6 +187,10 @@ public class CourseWorkspaceView extends JPanel implements ActionListener, Prope
 
     public void setMockTestController(MockTestController mockTestController) {
         this.mockTestController = mockTestController;
+    }
+
+    public void setOpenLectureNotesAction(Runnable action) {
+        this.openLectureNotesAction = action;
     }
 
     public void setFlashcardsController(GenerateFlashcardsController flashcardsController) {

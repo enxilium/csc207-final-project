@@ -463,4 +463,116 @@ public class FlashcardTest {
             this.firePropertyChangeCalled = true;
         }
     }
+    // ========== MISSING COVERAGE TESTS ==========
+
+    @Test
+    public void testViewModel_addPropertyChangeListener() {
+        FlashcardViewModel viewModel = new FlashcardViewModel();
+        TestPropertyChangeListener listener = new TestPropertyChangeListener();
+
+        viewModel.addPropertyChangeListener(listener);
+
+        // Trigger a property change
+        viewModel.setLoading(true);
+
+        // Listener should be notified
+        assertTrue(listener.wasNotified);
+        assertEquals("loadingChanged", listener.lastPropertyName);
+    }
+
+    @Test
+    public void testViewModel_removePropertyChangeListener() {
+        FlashcardViewModel viewModel = new FlashcardViewModel();
+        TestPropertyChangeListener listener = new TestPropertyChangeListener();
+
+        viewModel.addPropertyChangeListener(listener);
+        viewModel.removePropertyChangeListener(listener);
+
+        // Trigger a property change
+        viewModel.setLoading(true);
+
+        // Listener should NOT be notified
+        assertFalse(listener.wasNotified);
+    }
+
+    @Test
+    public void testHardCodedCourseLookup_found() {
+        data_access.HardCodedCourseLookup lookup = new data_access.HardCodedCourseLookup();
+        entities.Course course = lookup.getCourseById("RLG200");
+
+        assertNotNull(course);
+        assertEquals("RLG200", course.getCourseId());
+        assertEquals("Religion Studies", course.getName());
+        assertEquals("Demo course for testing", course.getDescription());
+        assertFalse(course.getUploadedFiles().isEmpty());
+    }
+
+    @Test
+    public void testHardCodedCourseLookup_notFound() {
+        data_access.HardCodedCourseLookup lookup = new data_access.HardCodedCourseLookup();
+        entities.Course course = lookup.getCourseById("INVALID");
+
+        assertNull(course);
+    }
+
+    @Test
+    public void testHardCodedCourseLookup_nullInput() {
+        data_access.HardCodedCourseLookup lookup = new data_access.HardCodedCourseLookup();
+        entities.Course course = lookup.getCourseById(null);
+
+        assertNull(course);
+    }
+
+    @Test
+    public void testHardCodedCourseLookup_emptyString() {
+        data_access.HardCodedCourseLookup lookup = new data_access.HardCodedCourseLookup();
+        entities.Course course = lookup.getCourseById("");
+
+        assertNull(course);
+    }
+
+    // Helper class for property change listener testing
+    private static class TestPropertyChangeListener implements java.beans.PropertyChangeListener {
+        boolean wasNotified = false;
+        String lastPropertyName = null;
+
+        @Override
+        public void propertyChange(java.beans.PropertyChangeEvent evt) {
+            wasNotified = true;
+            lastPropertyName = evt.getPropertyName();
+        }
+    }
+
+    @Test
+    public void testViewModel_setCardIndex_allBranches() {
+        FlashcardViewModel viewModel = new FlashcardViewModel();
+
+        // Branch 1: currentFlashcardSet is null
+        viewModel.setCurrentCardIndex(0);
+        assertEquals(0, viewModel.getCurrentCardIndex());
+
+        // Set up flashcard set
+        List<Flashcard> cards = Arrays.asList(
+                new Flashcard("Q1", "A1"),
+                new Flashcard("Q2", "A2")
+        );
+        FlashcardSet set = new FlashcardSet("TEST", cards);
+        viewModel.setCurrentFlashcardSet(set);
+
+        // Branch 2: index < 0
+        viewModel.setCurrentCardIndex(-5);
+        assertEquals(0, viewModel.getCurrentCardIndex()); // Should not change
+
+        // Branch 3: index >= size
+        viewModel.setCurrentCardIndex(10);
+        assertEquals(0, viewModel.getCurrentCardIndex()); // Should not change
+
+        // Branch 4: valid index at boundary (size - 1)
+        viewModel.setCurrentCardIndex(1);
+        assertEquals(1, viewModel.getCurrentCardIndex());
+
+        // Branch 5: valid index at 0
+        viewModel.setCurrentCardIndex(0);
+        assertEquals(0, viewModel.getCurrentCardIndex());
+    }
 }

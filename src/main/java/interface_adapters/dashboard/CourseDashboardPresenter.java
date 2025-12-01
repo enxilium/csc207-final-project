@@ -7,6 +7,10 @@ import usecases.workspace.*;
 import interface_adapters.workspace.*;
 import java.util.List;
 
+/**
+ * Presenter for the course dashboard use case.
+ * Prepares view models and manages view transitions for the dashboard.
+ */
 public class CourseDashboardPresenter implements CourseDashboardOutputBoundary {
     private final CourseDashboardViewModel courseDashboardViewModel;
     private final CourseWorkspaceViewModel courseWorkspaceViewModel;
@@ -14,6 +18,14 @@ public class CourseDashboardPresenter implements CourseDashboardOutputBoundary {
 
     private final ViewManagerModel viewManagerModel;
 
+    /**
+     * Constructs a CourseDashboardPresenter with the given view models.
+     *
+     * @param viewManagerModel the model for managing view transitions
+     * @param courseDashboardViewModel the view model for the dashboard
+     * @param courseWorkspaceViewModel the view model for the workspace
+     * @param courseCreateViewModel the view model for course creation
+     */
     public CourseDashboardPresenter(ViewManagerModel viewManagerModel,
                                     CourseDashboardViewModel  courseDashboardViewModel,
                                     CourseWorkspaceViewModel  courseWorkspaceViewModel,

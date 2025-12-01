@@ -79,19 +79,6 @@ public class MockTestGenerationInteractor implements MockTestGenerationInputBoun
             options.add(matcher.group(1).trim());
         }
 
-        if (!options.isEmpty()) {
-            return options;
-        }
-
-        // Fallback: split lines and collect those starting with A-D.
-        String[] lines = question.split("\\R");
-        for (String line : lines) {
-            Matcher lineMatcher = MULTIPLE_CHOICE_OPTION_PATTERN.matcher(line);
-            if (lineMatcher.find()) {
-                options.add(lineMatcher.group(1).trim());
-            }
-        }
-
         return options.isEmpty() ? Collections.emptyList() : options;
     }
 }

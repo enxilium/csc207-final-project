@@ -1,5 +1,6 @@
 package app;
 
+import data_access.DemoCourseAccess;
 import data_access.GeminiApiDataAccess;
 import data_access.GeminiFlashcardGenerator;
 import data_access.LocalCourseRepository;
@@ -38,17 +39,7 @@ public class AppBuilder {
 
     // --- Data Access Objects ---
     private LocalCourseRepository courseDAO = new LocalCourseRepository();
-    private GeminiApiDataAccess geminiDAO;
-    
-    /**
-     * Lazy initialization of GeminiApiDataAccess to ensure API key is set first.
-     */
-    private GeminiApiDataAccess getGeminiDAO() {
-        if (geminiDAO == null) {
-            geminiDAO = new GeminiApiDataAccess();
-        }
-        return geminiDAO;
-    }
+    private final GeminiApiDataAccess geminiDAO = new GeminiApiDataAccess();
 
     // --- ViewModels and Views (stored for wiring) ---
     private MockTestViewModel mockTestViewModel;
@@ -116,7 +107,7 @@ public class AppBuilder {
 
     public AppBuilder addMockTestGenerationUseCase() {
         MockTestPresenter presenter = new MockTestPresenter(mockTestViewModel, viewManagerModel, loadingViewModel, timelineLogger);
-        MockTestGenerationInteractor interactor = new MockTestGenerationInteractor(courseDAO, getGeminiDAO(), presenter);
+        MockTestGenerationInteractor interactor = new MockTestGenerationInteractor(courseDAO, geminiDAO, presenter);
         MockTestController controller = new MockTestController(interactor);
         this.courseWorkspaceView.setMockTestController(controller);
 
@@ -129,7 +120,7 @@ public class AppBuilder {
                 courseDashboardViewModel, viewManagerModel, timelineLogger, mockTestViewModel);
 
         // The Interactor for the evaluation use case. It correctly uses the DAOs.
-        EvaluateTestInteractor evalInteractor = new EvaluateTestInteractor(courseDAO, getGeminiDAO(), evalPresenter);
+        EvaluateTestInteractor evalInteractor = new EvaluateTestInteractor(courseDAO, geminiDAO, evalPresenter);
 
         // The Controller that the WriteTestView will use to trigger the evaluation.
         EvaluateTestController evalController = new EvaluateTestController(evalInteractor);

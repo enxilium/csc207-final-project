@@ -1,73 +1,106 @@
 package app;
 
-import data_access.GeminiApiDataAccess;
+import java.awt.CardLayout;
+import java.util.UUID;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.WindowConstants;
+
+import com.google.gson.Gson;
+import data_access.FileTimelineRepository;
 import data_access.FlashcardGenerator;
+import data_access.GeminiApiDataAccess;
+import data_access.ITimelineRepository;
+import data_access.LocalCourseLookupGateway;
 import data_access.LocalCourseRepository;
-import entities.Course;
-import entities.PDFFile;
+import data_access.NotesGeminiApiDataAccess;
+import entities.FlashcardSet;
 import interface_adapters.LoadingViewModel;
 import interface_adapters.ViewManagerModel;
-import interface_adapters.dashboard.*;
-import interface_adapters.evaluate_test.*;
+import interface_adapters.dashboard.CourseDashboardController;
+import interface_adapters.dashboard.CourseDashboardPresenter;
+import interface_adapters.dashboard.CourseDashboardViewModel;
+import interface_adapters.evaluate_test.EvaluateTestController;
+import interface_adapters.evaluate_test.EvaluateTestPresenter;
+import interface_adapters.evaluate_test.EvaluateTestViewModel;
+import interface_adapters.file_management.FileManagementController;
+import interface_adapters.file_management.FileManagementPresenter;
+import interface_adapters.file_management.FileManagementViewModel;
 import interface_adapters.flashcards.FlashcardViewModel;
 import interface_adapters.flashcards.GenerateFlashcardsController;
 import interface_adapters.flashcards.GenerateFlashcardsPresenter;
-import interface_adapters.mock_test.*;
-import interface_adapters.workspace.*;
-import interface_adapters.file_management.*;
-import usecases.*;
-import usecases.GenerateFlashcardsInteractor;
+import interface_adapters.lecturenotes.GenerateLectureNotesController;
+import interface_adapters.lecturenotes.GenerateLectureNotesPresenter;
+import interface_adapters.lecturenotes.LectureNotesViewModel;
+import interface_adapters.mock_test.MockTestController;
+import interface_adapters.mock_test.MockTestPresenter;
+import interface_adapters.mock_test.MockTestViewModel;
+import interface_adapters.timeline.TimelineController;
+import interface_adapters.timeline.ViewTimelineSwingPresenter;
+import interface_adapters.timeline.ViewTimelineViewModel;
+import interface_adapters.workspace.CourseController;
+import interface_adapters.workspace.CourseCreateViewModel;
+import interface_adapters.workspace.CourseEditViewModel;
+import interface_adapters.workspace.CoursePresenter;
+import interface_adapters.workspace.CourseWorkspaceViewModel;
 import usecases.GenerateFlashcardsInputBoundary;
+import usecases.GenerateFlashcardsInteractor;
 import usecases.GenerateFlashcardsOutputBoundary;
 import usecases.GenerateFlashcardsResponseModel;
+import usecases.ICourseRepository;
 import usecases.Timeline.CourseIdMapper;
 import usecases.Timeline.TimelineLogger;
-import data_access.ITimelineRepository;
-import usecases.Timeline.ViewTimelineInputBoundary;
 import usecases.Timeline.ViewTimelineInteractor;
-import usecases.Timeline.ViewTimelineOutputBoundary;
-import usecases.Timeline.ViewTimelineResponse;
-import interface_adapters.timeline.TimelineController;
-import interface_adapters.timeline.ViewTimelineViewModel;
-import interface_adapters.timeline.ViewTimelineSwingPresenter;
-import views.ViewTimelineView;
-import data_access.FileTimelineRepository;
-import usecases.dashboard.*;
+import usecases.dashboard.CourseDashboardInputBoundary;
+import usecases.dashboard.CourseDashboardInteractor;
+import usecases.dashboard.CourseDashboardOutputBoundary;
 import usecases.evaluate_test.EvaluateTestInteractor;
 import usecases.evaluate_test.EvaluateTestOutputBoundary;
 import usecases.evaluate_test.EvaluateTestOutputData;
+import usecases.file_management.FileManagementInputBoundary;
+import usecases.file_management.FileManagementInteractor;
+import usecases.file_management.FileManagementOutputBoundary;
+import usecases.lecturenotes.CourseLookupGateway;
+import usecases.lecturenotes.GenerateLectureNotesInteractor;
+import usecases.lecturenotes.GenerateLectureNotesOutputBoundary;
+import usecases.lecturenotes.GenerateLectureNotesOutputData;
 import usecases.mock_test_generation.MockTestGenerationInteractor;
 import usecases.mock_test_generation.MockTestGenerationOutputBoundary;
 import usecases.mock_test_generation.MockTestGenerationOutputData;
-import usecases.workspace.*;
-import usecases.file_management.*;
+import usecases.workspace.CourseWorkspaceInputBoundary;
+import usecases.workspace.CourseWorkspaceInteractor;
+import usecases.workspace.CourseWorkspaceOutputBoundary;
+import views.CourseCreateView;
+import views.CourseDashboardView;
+import views.CourseEditView;
+import views.CourseWorkspaceView;
+import views.EvaluateTestView;
+import views.FileManagementView;
+import views.FlashcardDisplayView;
+import views.GenerateFlashcardsView;
+import views.LectureNotesView;
+import views.LoadingView;
+import views.ViewTimelineView;
+import views.WriteTestView;
 
-import views.*;
-
-import java.util.UUID;
-
-import javax.swing.*;
-import java.awt.*;
-
+/**
+ * The AppBuilder class is responsible for assembling the application's components,
+ * including views, view models, controllers, and interactors.
+ */
 public class AppBuilder {
+    private static final int SNIPPET_LENGTH = 100;
+
     // --- Shared Components held by the Builder ---
     private final CardLayout cardLayout = new CardLayout();
     private final JPanel cardPanel = new JPanel(cardLayout);
     private final ViewManagerModel viewManagerModel = new ViewManagerModel();
 
     // --- Data Access Objects ---
-    private LocalCourseRepository courseDAO = new LocalCourseRepository();
-    private GeminiApiDataAccess geminiDAO;
-    
-    /**
-     * Lazy initialization of GeminiApiDataAccess to ensure API key is set first.
-     */
-    private GeminiApiDataAccess getGeminiDAO() {
-        if (geminiDAO == null) {
-            geminiDAO = new GeminiApiDataAccess();
-        }
-        return geminiDAO;
-    }
+    private final LocalCourseRepository courseDao = new LocalCourseRepository();
+    private GeminiApiDataAccess geminiDao;
+    private final ITimelineRepository timelineRepository = new FileTimelineRepository();
+    private final TimelineLogger timelineLogger = new TimelineLogger(timelineRepository);
 
     // --- ViewModels and Views (stored for wiring) ---
     private MockTestViewModel mockTestViewModel;
@@ -75,9 +108,10 @@ public class AppBuilder {
     private LoadingViewModel loadingViewModel;
     private WriteTestView writeTestView;
     private EvaluateTestView evaluateTestView;
+    
     // Lecture notes
-    private interface_adapters.lecturenotes.LectureNotesViewModel lectureNotesViewModel;
-    private views.LectureNotesView lectureNotesView;
+    private LectureNotesViewModel lectureNotesViewModel;
+    private LectureNotesView lectureNotesView;
 
     // === SHIRLEY: Course dashboard/workspace view models & views ===
     private CourseDashboardViewModel courseDashboardViewModel;
@@ -102,25 +136,43 @@ public class AppBuilder {
     private FlashcardDisplayView flashcardDisplayView;
 
     // === IAIN: Timeline view models & views ===
-    private interface_adapters.timeline.ViewTimelineViewModel timelineViewModel;
-    private views.ViewTimelineView timelineView;
-    private interface_adapters.timeline.TimelineController timelineController;
-    private final ITimelineRepository timelineRepository = new data_access.FileTimelineRepository();
-    private final TimelineLogger timelineLogger = new TimelineLogger(timelineRepository);
+    private ViewTimelineViewModel timelineViewModel;
+    private ViewTimelineView timelineView;
+    private TimelineController timelineController;
 
+    /**
+     * Constructor for AppBuilder.
+     */
     public AppBuilder() {
         // Optionally leave empty, or only do non-demo initialization
     }
 
+    /**
+     * Lazy initialization of GeminiApiDataAccess to ensure API key is set first.
+     * @return The GeminiApiDataAccess instance.
+     */
+    private GeminiApiDataAccess getGeminiDao() {
+        if (geminiDao == null) {
+            geminiDao = new GeminiApiDataAccess();
+        }
+        return geminiDao;
+    }
 
-
+    /**
+     * Adds the WriteTestView to the application.
+     * @return this AppBuilder for method chaining.
+     */
     public AppBuilder addWriteTestView() {
         mockTestViewModel = new MockTestViewModel();
-        writeTestView = new WriteTestView(mockTestViewModel); // The view for taking the test
+        writeTestView = new WriteTestView(mockTestViewModel);
         cardPanel.add(writeTestView, mockTestViewModel.getViewName());
         return this;
     }
 
+    /**
+     * Adds the EvaluateTestView to the application.
+     * @return this AppBuilder for method chaining.
+     */
     public AppBuilder addEvaluateTestView() {
         evaluateTestViewModel = new EvaluateTestViewModel();
         evaluateTestView = new EvaluateTestView(evaluateTestViewModel);
@@ -128,19 +180,28 @@ public class AppBuilder {
         return this;
     }
 
+    /**
+     * Adds the LoadingView to the application.
+     * @return this AppBuilder for method chaining.
+     */
     public AppBuilder addLoadingView() {
         loadingViewModel = new LoadingViewModel();
-        LoadingView loadingView = new LoadingView(loadingViewModel);
+        final LoadingView loadingView = new LoadingView(loadingViewModel);
         cardPanel.add(loadingView, loadingViewModel.getViewName());
         return this;
     }
 
+    /**
+     * Adds the MockTestGeneration use case to the application.
+     * @return this AppBuilder for method chaining.
+     */
     public AppBuilder addMockTestGenerationUseCase() {
         // Create original presenter
-        MockTestPresenter originalPresenter = new MockTestPresenter(mockTestViewModel, viewManagerModel, loadingViewModel);
+        final MockTestPresenter originalPresenter = new MockTestPresenter(mockTestViewModel,
+                viewManagerModel, loadingViewModel);
         
         // Wrap presenter to add Timeline logging
-        MockTestGenerationOutputBoundary presenter =
+        final MockTestGenerationOutputBoundary presenter =
                 new MockTestGenerationOutputBoundary() {
                     @Override
                     public void presentTest(MockTestGenerationOutputData outputData) {
@@ -148,17 +209,19 @@ public class AppBuilder {
                         
                         // Log to Timeline
                         try {
-                            String courseId = outputData.getCourseId();
+                            final String courseId = outputData.getCourseId();
                             if (courseId != null && !courseId.isEmpty()) {
-                                UUID courseUuid = CourseIdMapper.getUuidForCourseId(courseId);
-                                UUID contentId = UUID.randomUUID();
-                                int numQuestions = outputData.getQuestions() != null ? outputData.getQuestions().size() : 0;
+                                final UUID courseUuid = CourseIdMapper.getUuidForCourseId(courseId);
+                                final UUID contentId = UUID.randomUUID();
+                                final int numQuestions = outputData.getQuestions() != null
+                                        ? outputData.getQuestions().size() : 0;
                                 // Serialize to JSON in the framework layer (not in use case)
-                                com.google.gson.Gson gson = new com.google.gson.Gson();
-                                String testDataJson = gson.toJson(outputData);
+                                final Gson gson = new Gson();
+                                final String testDataJson = gson.toJson(outputData);
                                 timelineLogger.logQuizGenerated(courseUuid, contentId, numQuestions, testDataJson);
                             }
-                        } catch (Exception e) {
+                        }
+                        catch (Exception ex) {
                             // Don't break the flow if Timeline logging fails
                         }
                     }
@@ -174,20 +237,25 @@ public class AppBuilder {
                     }
                 };
         
-        MockTestGenerationInteractor interactor = new MockTestGenerationInteractor(courseDAO, getGeminiDAO(), presenter);
-        MockTestController controller = new MockTestController(interactor);
+        final MockTestGenerationInteractor interactor = new MockTestGenerationInteractor(courseDao,
+                getGeminiDao(), presenter);
+        final MockTestController controller = new MockTestController(interactor);
         this.courseWorkspaceView.setMockTestController(controller);
 
         return this;
     }
 
+    /**
+     * Adds the EvaluateTest use case to the application.
+     * @return this AppBuilder for method chaining.
+     */
     public AppBuilder addEvaluateTestUseCase() {
         // The original Presenter for the evaluation results view
-        EvaluateTestPresenter originalEvalPresenter = new EvaluateTestPresenter(evaluateTestViewModel, loadingViewModel,
-                courseDashboardViewModel, viewManagerModel);
+        final EvaluateTestPresenter originalEvalPresenter = new EvaluateTestPresenter(evaluateTestViewModel,
+                loadingViewModel, courseDashboardViewModel, viewManagerModel);
         
         // Wrap presenter to add Timeline logging
-        EvaluateTestOutputBoundary evalPresenter =
+        final EvaluateTestOutputBoundary evalPresenter =
                 new EvaluateTestOutputBoundary() {
                     @Override
                     public void presentEvaluationResults(EvaluateTestOutputData evaluateTestOutputData) {
@@ -197,23 +265,25 @@ public class AppBuilder {
                         try {
                             // Get courseId from MockTestViewModel state
                             if (mockTestViewModel != null) {
-                                var mockTestState = mockTestViewModel.getState();
-                                String courseId = mockTestState != null ? mockTestState.getCourseId() : null;
+                                final var mockTestState = mockTestViewModel.getState();
+                                final String courseId = mockTestState != null ? mockTestState.getCourseId() : null;
                                 
                                 if (courseId != null && !courseId.isEmpty()) {
-                                    UUID courseUuid = CourseIdMapper.getUuidForCourseId(courseId);
-                                    UUID contentId = UUID.randomUUID();
-                                    int numQuestions = evaluateTestOutputData.getQuestions() != null 
+                                    final UUID courseUuid = CourseIdMapper.getUuidForCourseId(courseId);
+                                    final UUID contentId = UUID.randomUUID();
+                                    final int numQuestions = evaluateTestOutputData.getQuestions() != null
                                             ? evaluateTestOutputData.getQuestions().size() 
                                             : 0;
-                                    double score = evaluateTestOutputData.getScore();
+                                    final double score = evaluateTestOutputData.getScore();
                                     // Serialize to JSON in the framework layer (not in use case)
-                                    com.google.gson.Gson gson = new com.google.gson.Gson();
-                                    String evaluationDataJson = gson.toJson(evaluateTestOutputData);
-                                    timelineLogger.logQuizSubmitted(courseUuid, contentId, numQuestions, score, evaluationDataJson);
+                                    final Gson gson = new Gson();
+                                    final String evaluationDataJson = gson.toJson(evaluateTestOutputData);
+                                    timelineLogger.logQuizSubmitted(courseUuid, contentId, numQuestions,
+                                            score, evaluationDataJson);
                                 }
                             }
-                        } catch (Exception e) {
+                        }
+                        catch (Exception ex) {
                             // Don't break the flow if Timeline logging fails
                         }
                     }
@@ -230,13 +300,15 @@ public class AppBuilder {
                 };
 
         // The Interactor for the evaluation use case. It correctly uses the DAOs.
-        EvaluateTestInteractor evalInteractor = new EvaluateTestInteractor(courseDAO, getGeminiDAO(), evalPresenter);
+        final EvaluateTestInteractor evalInteractor = new EvaluateTestInteractor(courseDao,
+                getGeminiDao(), evalPresenter);
 
         // The Controller that the WriteTestView will use to trigger the evaluation.
-        EvaluateTestController evalController = new EvaluateTestController(evalInteractor);
+        final EvaluateTestController evalController = new EvaluateTestController(evalInteractor);
 
         // The Presenter for the WriteTestView's navigation (next/prev question).
-        MockTestPresenter mockTestPresenter = new MockTestPresenter(mockTestViewModel, viewManagerModel, loadingViewModel);
+        final MockTestPresenter mockTestPresenter = new MockTestPresenter(mockTestViewModel,
+                viewManagerModel, loadingViewModel);
 
         // Inject both the controller (for submitting) and the presenter (for navigation) into the WriteTestView.
         writeTestView.setController(evalController);
@@ -248,39 +320,52 @@ public class AppBuilder {
         return this;
     }
 
+    /**
+     * Adds the LectureNotesView to the application.
+     * @return this AppBuilder for method chaining.
+     */
     public AppBuilder addLectureNotesView() {
-        this.lectureNotesViewModel = new interface_adapters.lecturenotes.LectureNotesViewModel();
+        this.lectureNotesViewModel = new LectureNotesViewModel();
         return this;
     }
 
+    /**
+     * Adds the LectureNotes use case to the application.
+     * @return this AppBuilder for method chaining.
+     */
     public AppBuilder addLectureNotesUseCase() {
         // 1) gateway
-        usecases.lecturenotes.CourseLookupGateway courseGateway =
-                new data_access.LocalCourseLookupGateway(this.courseDAO);
+        final CourseLookupGateway courseGateway =
+                new LocalCourseLookupGateway(this.courseDao);
 
         // 2) presenter (wrapped with Timeline logging)
-        interface_adapters.lecturenotes.GenerateLectureNotesPresenter originalPresenter =
-                new interface_adapters.lecturenotes.GenerateLectureNotesPresenter(
+        final GenerateLectureNotesPresenter originalPresenter =
+                new GenerateLectureNotesPresenter(
                         this.lectureNotesViewModel, this.viewManagerModel);
         
         // Wrap presenter to add Timeline logging
-        usecases.lecturenotes.GenerateLectureNotesOutputBoundary presenter =
-                new usecases.lecturenotes.GenerateLectureNotesOutputBoundary() {
+        final GenerateLectureNotesOutputBoundary presenter =
+                new GenerateLectureNotesOutputBoundary() {
                     @Override
-                    public void prepareSuccessView(usecases.lecturenotes.GenerateLectureNotesOutputData outputData) {
+                    public void prepareSuccessView(GenerateLectureNotesOutputData outputData) {
                         originalPresenter.prepareSuccessView(outputData);
                         
                         // Log to Timeline
                         try {
-                            UUID courseUuid = CourseIdMapper.getUuidForCourseId(outputData.getCourseId());
-                            UUID contentId = UUID.randomUUID();
-                            String title = outputData.getTopic();
-                            String notesText = outputData.getNotesText();
-                            String snippet = notesText != null && notesText.length() > 100 
-                                    ? notesText.substring(0, 100) + "..." 
-                                    : notesText;
+                            final UUID courseUuid = CourseIdMapper.getUuidForCourseId(outputData.getCourseId());
+                            final UUID contentId = UUID.randomUUID();
+                            final String title = outputData.getTopic();
+                            final String notesText = outputData.getNotesText();
+                            final String snippet;
+                            if (notesText != null && notesText.length() > SNIPPET_LENGTH) {
+                                snippet = notesText.substring(0, SNIPPET_LENGTH) + "...";
+                            }
+                            else {
+                                snippet = notesText;
+                            }
                             timelineLogger.logNotesGenerated(courseUuid, contentId, title, snippet, notesText);
-                        } catch (Exception e) {
+                        }
+                        catch (Exception ex) {
                             // Don't break the flow if Timeline logging fails
                         }
                     }
@@ -292,24 +377,25 @@ public class AppBuilder {
                 };
 
         // 3) interactor
-        usecases.lecturenotes.GenerateLectureNotesInteractor interactor =
-                new usecases.lecturenotes.GenerateLectureNotesInteractor(
+        final GenerateLectureNotesInteractor interactor =
+                new GenerateLectureNotesInteractor(
                         courseGateway,
-                        new data_access.NotesGeminiApiDataAccess(),
+                        new NotesGeminiApiDataAccess(),
                         presenter
                 );
 
         // 4) controller
-        interface_adapters.lecturenotes.GenerateLectureNotesController controller =
-                new interface_adapters.lecturenotes.GenerateLectureNotesController(interactor);
+        final GenerateLectureNotesController controller =
+                new GenerateLectureNotesController(interactor);
 
         // 5) view (two-arg ctor)
         if (this.lectureNotesView == null) {
             this.lectureNotesView =
-                    new views.LectureNotesView(this.lectureNotesViewModel, controller);
+                    new LectureNotesView(this.lectureNotesViewModel, controller);
             this.cardPanel.add(this.lectureNotesView,
                     this.lectureNotesViewModel.getViewName());
-        } else {
+        }
+        else {
             // if the view already exists (hot rebuild path)
             this.lectureNotesView.setController(controller);
         }
@@ -318,7 +404,8 @@ public class AppBuilder {
         this.lectureNotesView.setBackAction(() -> {
             if (this.courseWorkspaceView != null) {
                 this.viewManagerModel.setState(this.courseWorkspaceView.getViewName());
-            } else if (this.courseDashboardView != null) {
+            }
+            else if (this.courseDashboardView != null) {
                 this.viewManagerModel.setState(this.courseDashboardView.getViewName());
             }
             this.viewManagerModel.firePropertyChange();
@@ -327,9 +414,12 @@ public class AppBuilder {
         return this;
     }
 
-
     // === SHIRLEY: Course dashboard / workspace methods ===
 
+    /**
+     * Adds the CourseDashboardView to the application.
+     * @return this AppBuilder for method chaining.
+     */
     public AppBuilder addCourseDashboardView() {
         this.courseDashboardViewModel = new CourseDashboardViewModel();
         this.courseDashboardView = new CourseDashboardView(courseDashboardViewModel);
@@ -337,6 +427,10 @@ public class AppBuilder {
         return this;
     }
 
+    /**
+     * Adds the CourseWorkspaceView to the application.
+     * @return this AppBuilder for method chaining.
+     */
     public AppBuilder addCourseWorkspaceView() {
         this.courseWorkspaceViewModel = new CourseWorkspaceViewModel();
         this.courseWorkspaceView = new CourseWorkspaceView(courseWorkspaceViewModel);
@@ -345,6 +439,10 @@ public class AppBuilder {
         return this;
     }
 
+    /**
+     * Adds the CourseCreateView to the application.
+     * @return this AppBuilder for method chaining.
+     */
     public AppBuilder addCourseCreateView() {
         this.courseCreateViewModel = new CourseCreateViewModel();
         this.courseCreateView = new CourseCreateView(courseCreateViewModel);
@@ -352,6 +450,10 @@ public class AppBuilder {
         return this;
     }
 
+    /**
+     * Adds the CourseEditView to the application.
+     * @return this AppBuilder for method chaining.
+     */
     public AppBuilder addCourseEditView() {
         this.courseEditViewModel = new CourseEditViewModel();
         this.courseEditView = new CourseEditView(courseEditViewModel);
@@ -359,6 +461,10 @@ public class AppBuilder {
         return this;
     }
 
+    /**
+     * Adds the FileManagementView to the application.
+     * @return this AppBuilder for method chaining.
+     */
     public AppBuilder addFileManagementView() {
         this.fileManagementViewModel = new FileManagementViewModel();
         this.fileManagementView = new FileManagementView(fileManagementViewModel);
@@ -366,9 +472,13 @@ public class AppBuilder {
         return this;
     }
 
+    /**
+     * Adds the Course use cases to the application.
+     * @return this AppBuilder for method chaining.
+     */
     public AppBuilder addCourseUseCases() {
         // presenter for dashboard + navigation
-        CourseDashboardOutputBoundary courseDashboardPresenter =
+        final CourseDashboardOutputBoundary courseDashboardPresenter =
                 new CourseDashboardPresenter(
                         viewManagerModel,
                         courseDashboardViewModel,
@@ -377,15 +487,15 @@ public class AppBuilder {
                 );
 
         // local course repository for your use cases
-        ICourseRepository courseRepository = this.courseDAO;
+        final ICourseRepository courseRepository = this.courseDao;
 
-        CourseDashboardInputBoundary courseDashboardInteractor =
+        final CourseDashboardInputBoundary courseDashboardInteractor =
                 new CourseDashboardInteractor(courseRepository, courseDashboardPresenter);
-        CourseDashboardController courseDashboardController =
+        final CourseDashboardController courseDashboardController =
                 new CourseDashboardController(courseDashboardInteractor);
 
         // presenter for workspace / edit views
-        CourseWorkspaceOutputBoundary coursePresenter =
+        final CourseWorkspaceOutputBoundary coursePresenter =
                 new CoursePresenter(
                         viewManagerModel,
                         courseDashboardViewModel,
@@ -393,9 +503,9 @@ public class AppBuilder {
                         courseEditViewModel
                 );
 
-        CourseWorkspaceInputBoundary courseWorkspaceInteractor =
+        final CourseWorkspaceInputBoundary courseWorkspaceInteractor =
                 new CourseWorkspaceInteractor(courseRepository, coursePresenter, courseDashboardPresenter);
-        CourseController courseController = new CourseController(courseWorkspaceInteractor);
+        final CourseController courseController = new CourseController(courseWorkspaceInteractor);
 
         // hook controllers into your views
         this.courseDashboardView.setCourseDashboardController(courseDashboardController);
@@ -407,9 +517,9 @@ public class AppBuilder {
         // Open notes from the workspace; pass the current course id, then navigate.
         this.courseWorkspaceView.setOpenLectureNotesAction(() -> {
             // get currently selected course from the workspace VM
-            var wsState = this.courseWorkspaceViewModel.getState();
-            var course = (wsState == null) ? null : wsState.getCourse();
-            String id = (course == null) ? "" : course.getCourseId();
+            final var wsState = this.courseWorkspaceViewModel.getState();
+            final var course = (wsState == null) ? null : wsState.getCourse();
+            final String id = (course == null) ? "" : course.getCourseId();
 
             // hand id to notes view
             this.lectureNotesView.setCourseId(id);
@@ -428,13 +538,13 @@ public class AppBuilder {
             }
             
             // get currently selected course from the workspace VM
-            var wsState = this.courseWorkspaceViewModel.getState();
-            var course = (wsState == null) ? null : wsState.getCourse();
-            String courseId = (course == null) ? "" : course.getCourseId();
+            final var wsState = this.courseWorkspaceViewModel.getState();
+            final var course = (wsState == null) ? null : wsState.getCourse();
+            final String courseId = (course == null) ? "" : course.getCourseId();
 
             if (courseId != null && !courseId.isEmpty()) {
                 // Convert String course ID to UUID using CourseIdMapper
-                UUID courseUuid = CourseIdMapper.getUuidForCourseId(courseId);
+                final UUID courseUuid = CourseIdMapper.getUuidForCourseId(courseId);
                 
                 // Set the course ID in the Timeline ViewModel
                 this.timelineViewModel.setCourseId(courseUuid);
@@ -454,12 +564,12 @@ public class AppBuilder {
         this.courseEditView.setCourseWorkspaceController(courseController);
 
         // File management use case
-        FileManagementOutputBoundary fileManagementPresenter =
+        final FileManagementOutputBoundary fileManagementPresenter =
                 new FileManagementPresenter(fileManagementViewModel, viewManagerModel);
 
-        FileManagementInputBoundary fileManagementInteractor =
+        final FileManagementInputBoundary fileManagementInteractor =
                 new FileManagementInteractor(courseRepository, fileManagementPresenter);
-        FileManagementController fileManagementController =
+        final FileManagementController fileManagementController =
                 new FileManagementController(fileManagementInteractor);
 
         // Hook file management controller into views
@@ -496,17 +606,17 @@ public class AppBuilder {
      */
     public AppBuilder addFlashcardGenerationUseCase() {
         // Create the flashcard generator (using Gemini API)
-        FlashcardGenerator generator = getGeminiDAO();
+        final FlashcardGenerator generator = getGeminiDao();
 
         // Create the original presenter
-        GenerateFlashcardsPresenter originalPresenter =
+        final GenerateFlashcardsPresenter originalPresenter =
                 new GenerateFlashcardsPresenter(flashcardViewModel, viewManagerModel);
         
         // Wrap presenter to add Timeline logging
         // Use a final array to capture courseName from the interactor wrapper
         final String[] capturedCourseName = new String[1];
         
-        GenerateFlashcardsOutputBoundary presenter =
+        final GenerateFlashcardsOutputBoundary presenter =
                 new GenerateFlashcardsOutputBoundary() {
                     @Override
                     public void presentFlashcards(GenerateFlashcardsResponseModel responseModel) {
@@ -515,13 +625,14 @@ public class AppBuilder {
                         // Log to Timeline
                         try {
                             if (capturedCourseName[0] != null && !capturedCourseName[0].isEmpty()) {
-                                UUID courseUuid = CourseIdMapper.getUuidForCourseId(capturedCourseName[0]);
-                                UUID contentId = UUID.randomUUID();
-                                entities.FlashcardSet set = responseModel.getFlashcardSet();
-                                int numCards = set != null ? set.size() : 0;
+                                final UUID courseUuid = CourseIdMapper.getUuidForCourseId(capturedCourseName[0]);
+                                final UUID contentId = UUID.randomUUID();
+                                final FlashcardSet set = responseModel.getFlashcardSet();
+                                final int numCards = set != null ? set.size() : 0;
                                 timelineLogger.logFlashcardsGenerated(courseUuid, contentId, numCards, set);
                             }
-                        } catch (Exception e) {
+                        }
+                        catch (Exception ex) {
                             // Don't break the flow if Timeline logging fails
                         }
                     }
@@ -533,7 +644,7 @@ public class AppBuilder {
                 };
         
         // Wrap interactor to capture courseName
-        GenerateFlashcardsInputBoundary interactor =
+        final GenerateFlashcardsInputBoundary interactor =
                 new GenerateFlashcardsInputBoundary() {
                     @Override
                     public void execute(String courseName, String content) {
@@ -542,14 +653,14 @@ public class AppBuilder {
                     }
                 };
 
-            GenerateFlashcardsController controller =
-                    new GenerateFlashcardsController(interactor);
+        final GenerateFlashcardsController controller =
+                new GenerateFlashcardsController(interactor);
 
-            generateFlashcardsView.setController(controller);
-            courseWorkspaceView.setFlashcardsController(controller);
+        generateFlashcardsView.setController(controller);
+        courseWorkspaceView.setFlashcardsController(controller);
 
-            return this;
-        }
+        return this;
+    }
 
     // === TIMELINE: Timeline methods ===
 
@@ -563,7 +674,7 @@ public class AppBuilder {
 
         // Ensure required ViewModels exist (they should be created by other add methods)
         if (this.lectureNotesViewModel == null) {
-            this.lectureNotesViewModel = new interface_adapters.lecturenotes.LectureNotesViewModel();
+            this.lectureNotesViewModel = new LectureNotesViewModel();
         }
         if (this.flashcardViewModel == null) {
             this.flashcardViewModel = new FlashcardViewModel();
@@ -576,10 +687,10 @@ public class AppBuilder {
         }
 
         // Create the presenter
-        ViewTimelineSwingPresenter presenter = new ViewTimelineSwingPresenter(timelineViewModel);
+        final ViewTimelineSwingPresenter presenter = new ViewTimelineSwingPresenter(timelineViewModel);
 
         // Create the interactor
-        ViewTimelineInteractor interactor = new ViewTimelineInteractor(timelineRepository, presenter);
+        final ViewTimelineInteractor interactor = new ViewTimelineInteractor(timelineRepository, presenter);
 
         // Create the controller
         this.timelineController = new TimelineController(interactor);
@@ -624,8 +735,12 @@ public class AppBuilder {
         return timelineLogger;
     }
 
+    /**
+     * Builds and returns the main application frame.
+     * @return The main JFrame of the application.
+     */
     public JFrame build() {
-        JFrame application = new JFrame("StudyFlow AI Assistant");
+        final JFrame application = new JFrame("StudyFlow AI Assistant");
         application.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         application.add(cardPanel);
 
@@ -634,7 +749,7 @@ public class AppBuilder {
             if (!"state".equals(evt.getPropertyName())) {
                 return;
             }
-            String targetView = (String) evt.getNewValue();
+            final String targetView = (String) evt.getNewValue();
             if (targetView == null || targetView.isEmpty()) {
                 return;
             }

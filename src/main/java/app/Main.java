@@ -19,7 +19,7 @@ public class Main {
                 .addCourseWorkspaceView()
                 .addCourseCreateView()
                 .addCourseEditView()
-
+                .addFileManagementView()
                 // === Flashcard Views ===
                 .addFlashcardViews()  // Add flashcard UI
 

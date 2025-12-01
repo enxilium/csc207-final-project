@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import org.json.JSONObject;
@@ -41,6 +40,11 @@ public class LocalCourseRepository implements usecases.ICourseRepository, MockTe
             foundCourse.setCourseId(course.getCourseId());
             foundCourse.setName(course.getName());
             foundCourse.setDescription(course.getDescription());
+            // Preserve the files from the updated course
+            // The files are already updated in the course object passed in
+            // We need to replace the files in foundCourse with the ones from course
+            foundCourse.getUploadedFiles().clear();
+            foundCourse.getUploadedFiles().addAll(course.getUploadedFiles());
         }
         writeCourses(courses);
     }
@@ -95,15 +99,10 @@ public class LocalCourseRepository implements usecases.ICourseRepository, MockTe
         }
     }
 
-    private List<Course> readCourses(){
-
+    private List<Course> readCourses() {
         List<Course> courses = new ArrayList<>();
-
         try {
-            // Read the whole file into a String (no try-with-resources needed)
             String jsonString = Files.readString(Paths.get(FILE_NAME));
-
-            // Parse as a JSON array
             JSONArray jsonArray = new JSONArray(jsonString);
 
             for (int i = 0; i < jsonArray.length(); i++) {
@@ -113,17 +112,25 @@ public class LocalCourseRepository implements usecases.ICourseRepository, MockTe
                 String name = jsonObject.getString("name");
                 String description = jsonObject.getString("description");
 
-                courses.add(new Course(courseId, name, description));
+                Course course = new Course(courseId, name, description);
+
+                if (jsonObject.has("uploadedFiles")) {
+                    JSONArray filesArray = jsonObject.getJSONArray("uploadedFiles");
+                    for (int j = 0; j < filesArray.length(); j++) {
+                        course.addFile(new PDFFile(filesArray.getString(j)));
+                    }
+                }
+
+                courses.add(course);
             }
         } catch (IOException e) {
-            // File not found / can’t read → just start with empty list
             System.out.println("Could not read " + FILE_NAME + ", starting with empty course list.");
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         return courses;
     }
+
 
     private void writeCourses(List<Course> courses){
         //JSONObject rootObject = new JSONObject();
@@ -134,6 +141,14 @@ public class LocalCourseRepository implements usecases.ICourseRepository, MockTe
             obj.put("courseId", course.getCourseId());
             obj.put("name", course.getName());
             obj.put("description", course.getDescription());
+
+            // Write uploaded files
+            JSONArray filesArray = new JSONArray();
+            for (PDFFile file : course.getUploadedFiles()) {
+                filesArray.put(file.getPath().toString());
+            }
+            obj.put("uploadedFiles", filesArray);
+
             objectArray.put(obj);
         });
 
@@ -149,15 +164,13 @@ public class LocalCourseRepository implements usecases.ICourseRepository, MockTe
 
     @Override
     public List<PDFFile> getCourseMaterials(String courseId) {
-        System.out.println("Searching for: " + courseId);
-        System.out.println("Saved courses: " +  this.courses);
-        for (Course course :  this.courses) {
+        this.courses = readCourses(); // refresh from file every time
+
+        for (Course course : this.courses) {
             if (course.getCourseId().equals(courseId)) {
-                System.out.println(course.getCourseId() + course.getName() + course.getUploadedFiles().get(0).getPath());
                 return course.getUploadedFiles();
             }
         }
-        // Return an empty list if the course is not found, preventing null pointer exceptions.
         return Collections.emptyList();
     }
 }

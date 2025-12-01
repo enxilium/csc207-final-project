@@ -1,13 +1,14 @@
 package interface_adapters.lecturenotes;
 
 import interface_adapters.ViewManagerModel;
-import org.junit.Test;
+import interface_adapters.lecturenotes.LectureNotesState;
+import org.junit.jupiter.api.Test;
 import usecases.lecturenotes.GenerateLectureNotesOutputData;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class GenerateLectureNotesPresenterTest {
 
@@ -16,20 +17,36 @@ public class GenerateLectureNotesPresenterTest {
         ViewManagerModel viewManagerModel = new ViewManagerModel();
         LectureNotesViewModel viewModel = new LectureNotesViewModel();
 
+        // Put some dummy initial state to make sure it gets overwritten
+        LectureNotesState initialState = viewModel.getState();
+        initialState.setCourseId("OLD");
+        initialState.setTopic("OLD");
+        initialState.setNotesText("old notes");
+        initialState.setError("old error");
+        initialState.setLoading(true);
+        viewModel.setState(initialState);
+
         GenerateLectureNotesPresenter presenter =
                 new GenerateLectureNotesPresenter(viewModel, viewManagerModel);
 
         GenerateLectureNotesOutputData outputData =
-                new GenerateLectureNotesOutputData("CSC207", "Recursion", "Generated notes");
+                new GenerateLectureNotesOutputData(
+                        "CSC207",
+                        "Recursion",
+                        "Generated notes for recursion"
+                );
 
+        // Act: call the presenter
         presenter.prepareSuccessView(outputData);
 
+        // Assert: view manager switches to the lecture-notes view
+        assertEquals(viewModel.getViewName(), viewManagerModel.getState());
         Object state = invokeNoArg(viewModel, "getState");
         assertNotNull(state);
 
         assertEquals("CSC207", readString(state, "getCourseId", "courseId"));
         assertEquals("Recursion", readString(state, "getTopic", "topic"));
-        assertEquals("Generated notes", readString(state, "getNotesText", "getContent", "notesText", "content"));
+        assertEquals("Generated notes for recursion", readString(state, "getNotesText", "getContent", "notesText", "content"));
 
         Boolean loading = readNullableBoolean(state, "isLoading", "getLoading", "loading");
         if (loading != null) {

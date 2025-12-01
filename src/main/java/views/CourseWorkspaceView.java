@@ -18,6 +18,8 @@ import interface_adapters.dashboard.*;
 import interface_adapters.flashcards.GenerateFlashcardsController;
 import interface_adapters.mock_test.MockTestController;
 import interface_adapters.workspace.*;
+import interface_adapters.file_management.FileManagementController;
+import interface_adapters.ViewManagerModel;
 
 public class CourseWorkspaceView extends JPanel implements ActionListener, PropertyChangeListener {
     private final String viewName = "workspace";
@@ -25,6 +27,8 @@ public class CourseWorkspaceView extends JPanel implements ActionListener, Prope
     private CourseDashboardController courseDashboardController = null;
     private MockTestController mockTestController = null;
     private CourseController courseController = null;
+    private FileManagementController fileManagementController = null;
+    private ViewManagerModel viewManagerModel = null;
     private String courseId = null;
     private ViewManager viewManager = null;
     private CourseWorkspaceViewModel courseWorkspaceViewModel = null;
@@ -88,11 +92,40 @@ public class CourseWorkspaceView extends JPanel implements ActionListener, Prope
         //upload content
         JButton uploadButton = new JButton("Upload");
         uploadButton.setPreferredSize(new Dimension(120, 30));
+        uploadButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (fileManagementController != null && courseId != null) {
+                    JFileChooser fileChooser = new JFileChooser();
+                    fileChooser.setDialogTitle("Select a PDF file to upload");
+                    fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("PDF Files", "pdf"));
+                    int result = fileChooser.showOpenDialog(CourseWorkspaceView.this);
+                    if (result == JFileChooser.APPROVE_OPTION) {
+                        String filePath = fileChooser.getSelectedFile().getAbsolutePath();
+                        fileManagementController.uploadFile(courseId, filePath);
+                        // Refresh the view to show the new file
+                        fileManagementController.viewFiles(courseId);
+                    }
+                }
+            }
+        });
         bottomPanel.add(uploadButton);
 
         //open notes
         JButton noteButton = new JButton("Existing Notes");
         noteButton.setPreferredSize(new Dimension(140, 30));
+        noteButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (fileManagementController != null && courseId != null) {
+                    fileManagementController.viewFiles(courseId);
+                    if (viewManagerModel != null) {
+                        viewManagerModel.setState("fileManagement");
+                        viewManagerModel.firePropertyChange();
+                    }
+                }
+            }
+        });
         bottomPanel.add(noteButton);
         noteButton.addActionListener(e -> { if (openLectureNotesAction != null) openLectureNotesAction.run(); });
 
@@ -196,6 +229,14 @@ public class CourseWorkspaceView extends JPanel implements ActionListener, Prope
 
     public void setMockTestController(MockTestController mockTestController) {
         this.mockTestController = mockTestController;
+    }
+
+    public void setFileManagementController(FileManagementController fileManagementController) {
+        this.fileManagementController = fileManagementController;
+    }
+
+    public void setViewManagerModel(ViewManagerModel viewManagerModel) {
+        this.viewManagerModel = viewManagerModel;
     }
 
     public void setOpenLectureNotesAction(Runnable action) {

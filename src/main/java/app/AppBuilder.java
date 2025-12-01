@@ -15,12 +15,14 @@ import interface_adapters.flashcards.GenerateFlashcardsController;
 import interface_adapters.flashcards.GenerateFlashcardsPresenter;
 import interface_adapters.mock_test.*;
 import interface_adapters.workspace.*;
+import interface_adapters.file_management.*;
 import usecases.*;
 import usecases.GenerateFlashcardsInteractor;
 import usecases.dashboard.*;
 import usecases.evaluate_test.EvaluateTestInteractor;
 import usecases.mock_test_generation.MockTestGenerationInteractor;
 import usecases.workspace.*;
+import usecases.file_management.*;
 
 import views.*;
 
@@ -60,6 +62,10 @@ public class AppBuilder {
 
     private CourseEditViewModel courseEditViewModel;
     private CourseEditView courseEditView;
+
+    // === Soumil: File management view models and views ===
+    private FileManagementViewModel fileManagementViewModel;
+    private FileManagementView fileManagementView;
 
     // === WENLE: Flashcard view models & views ===
     private FlashcardViewModel flashcardViewModel;
@@ -210,6 +216,13 @@ public class AppBuilder {
         return this;
     }
 
+    public AppBuilder addFileManagementView() {
+        this.fileManagementViewModel = new FileManagementViewModel();
+        this.fileManagementView = new FileManagementView(fileManagementViewModel);
+        cardPanel.add(fileManagementView, fileManagementView.getViewName());
+        return this;
+    }
+
     public AppBuilder addCourseUseCases() {
         // presenter for dashboard + navigation
         CourseDashboardOutputBoundary courseDashboardPresenter =
@@ -267,6 +280,21 @@ public class AppBuilder {
         this.courseCreateView.setCourseWorkspaceController(courseController);
 
         this.courseEditView.setCourseWorkspaceController(courseController);
+
+        // File management use case
+        FileManagementOutputBoundary fileManagementPresenter =
+                new FileManagementPresenter(fileManagementViewModel, viewManagerModel);
+
+        FileManagementInputBoundary fileManagementInteractor =
+                new FileManagementInteractor(courseRepository, fileManagementPresenter);
+        FileManagementController fileManagementController =
+                new FileManagementController(fileManagementInteractor);
+
+        // Hook file management controller into views
+        this.courseWorkspaceView.setFileManagementController(fileManagementController);
+        this.courseWorkspaceView.setViewManagerModel(viewManagerModel);
+        this.fileManagementView.setController(fileManagementController);
+        this.fileManagementView.setViewManagerModel(viewManagerModel);
 
         return this;
     }

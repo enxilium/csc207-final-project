@@ -13,13 +13,17 @@ target/
 .idea/
 *.iml
 out/
+*.iws
+*.ipr
 
 # Mac OS
 .DS_Store
+**/.DS_Store
+**/._*
 
 # Log files
 *.log
 
 # Environment
 .env
-```.idea/
+

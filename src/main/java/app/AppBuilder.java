@@ -2,7 +2,7 @@ package app;
 
 import data_access.DemoCourseAccess;
 import data_access.GeminiApiDataAccess;
-import data_access.GeminiFlashcardGenerator;
+//import data_access.GeminiFlashcardGenerator;
 import data_access.LocalCourseRepository;
 import entities.Course;
 import entities.PDFFile;
@@ -295,27 +295,22 @@ public class AppBuilder {
      * @return this AppBuilder for method chaining
      */
     public AppBuilder addFlashcardGenerationUseCase() {
-        // Create the flashcard generator (using Gemini API)
-        GeminiFlashcardGenerator generator = new GeminiFlashcardGenerator();
+            // GeminiFlashcardGenerator generator = new GeminiFlashcardGenerator();
 
-        // Create the presenter
-        GenerateFlashcardsPresenter presenter =
-                new GenerateFlashcardsPresenter(flashcardViewModel, viewManagerModel);
+            GenerateFlashcardsPresenter presenter =
+                    new GenerateFlashcardsPresenter(flashcardViewModel, viewManagerModel);
 
-        // Create the interactor
-        GenerateFlashcardsInteractor interactor =
-                new GenerateFlashcardsInteractor(generator, presenter);
+            GenerateFlashcardsInteractor interactor =
+                    new GenerateFlashcardsInteractor(geminiDAO, presenter);  // 使用 geminiDAO
 
-        // Create the controller
-        GenerateFlashcardsController controller =
-                new GenerateFlashcardsController(interactor);
+            GenerateFlashcardsController controller =
+                    new GenerateFlashcardsController(interactor);
 
-        // Inject controller into the view
-        generateFlashcardsView.setController(controller);
-        courseWorkspaceView.setFlashcardsController(controller);
+            generateFlashcardsView.setController(controller);
+            courseWorkspaceView.setFlashcardsController(controller);
 
-        return this;
-    }
+            return this;
+        }
 
     public JFrame build() {
         JFrame application = new JFrame("StudyFlow AI Assistant");

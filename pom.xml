@@ -36,6 +36,11 @@
             <version>20240303</version>
         </dependency>
         <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>33.2.1-jre</version>
+        </dependency>
+        <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
             <version>4.12.0</version>
@@ -87,9 +92,4 @@
             </plugin>
         </plugins>
     </build>
-
-<<<<<<< HEAD
 </project>
-=======
-</project>
->>>>>>> origin/main

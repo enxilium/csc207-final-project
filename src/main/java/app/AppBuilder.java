@@ -1,7 +1,7 @@
 package app;
 
 import data_access.GeminiApiDataAccess;
-import data_access.GeminiFlashcardGenerator;
+import data_access.FlashcardGenerator;
 import data_access.LocalCourseRepository;
 import entities.Course;
 import entities.PDFFile;
@@ -54,7 +54,6 @@ public class AppBuilder {
     private final CardLayout cardLayout = new CardLayout();
     private final JPanel cardPanel = new JPanel(cardLayout);
     private final ViewManagerModel viewManagerModel = new ViewManagerModel();
-    private final ViewManager viewManager = new ViewManager(cardPanel, cardLayout, viewManagerModel);
 
     // --- Data Access Objects ---
     private LocalCourseRepository courseDAO = new LocalCourseRepository();
@@ -110,11 +109,9 @@ public class AppBuilder {
     private final TimelineLogger timelineLogger = new TimelineLogger(timelineRepository);
 
     public AppBuilder() {
-        PDFFile dummyPdf = new PDFFile("test.pdf");
-        Course dummyCourse = new Course("PHL245", "Modern Symbolic Logic", "demo course");
-        dummyCourse.addFile(dummyPdf);
-        courseDAO.create(dummyCourse);
+        // Optionally leave empty, or only do non-demo initialization
     }
+
 
 
     public AppBuilder addWriteTestView() {
@@ -259,7 +256,7 @@ public class AppBuilder {
     public AppBuilder addLectureNotesUseCase() {
         // 1) gateway
         usecases.lecturenotes.CourseLookupGateway courseGateway =
-                new data_access.HardCodedCourseLookup();
+                new data_access.LocalCourseLookupGateway(this.courseDAO);
 
         // 2) presenter (wrapped with Timeline logging)
         interface_adapters.lecturenotes.GenerateLectureNotesPresenter originalPresenter =
@@ -343,6 +340,7 @@ public class AppBuilder {
     public AppBuilder addCourseWorkspaceView() {
         this.courseWorkspaceViewModel = new CourseWorkspaceViewModel();
         this.courseWorkspaceView = new CourseWorkspaceView(courseWorkspaceViewModel);
+        this.courseWorkspaceView.setMockTestViewModel(this.mockTestViewModel);
         cardPanel.add(courseWorkspaceView, courseWorkspaceView.getViewName());
         return this;
     }
@@ -379,7 +377,7 @@ public class AppBuilder {
                 );
 
         // local course repository for your use cases
-        ICourseRepository courseRepository = new LocalCourseRepository();
+        ICourseRepository courseRepository = this.courseDAO;
 
         CourseDashboardInputBoundary courseDashboardInteractor =
                 new CourseDashboardInteractor(courseRepository, courseDashboardPresenter);
@@ -498,7 +496,7 @@ public class AppBuilder {
      */
     public AppBuilder addFlashcardGenerationUseCase() {
         // Create the flashcard generator (using Gemini API)
-        GeminiFlashcardGenerator generator = new GeminiFlashcardGenerator();
+        FlashcardGenerator generator = getGeminiDAO();
 
         // Create the original presenter
         GenerateFlashcardsPresenter originalPresenter =

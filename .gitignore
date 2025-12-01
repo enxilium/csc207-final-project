@@ -54,3 +54,28 @@ run.sh
 
 # Demo files
 **/TimelineSwingDemo.java
+# Compiled class files
+*.class
+
+# Package files
+*.jar
+*.war
+*.ear
+
+# Maven
+target/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+out/
+
+# Mac OS
+.DS_Store
+
+# Log files
+*.log
+
+# Environment
+.env
+```.idea/

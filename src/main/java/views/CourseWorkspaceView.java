@@ -112,20 +112,11 @@ public class CourseWorkspaceView extends JPanel implements ActionListener, Prope
         JButton createFlashCardButton = new JButton("Create Flashcards");
         createFlashCardButton.setPreferredSize(new Dimension(150, 30));
         bottomPanel.add(createFlashCardButton);
-        createFlashCardButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (flashcardsController != null) {
-                    System.out.println("=== Generating flashcards ===");
-
-                    String pdfPath = "src/main/resources/test.pdf";
-                    System.out.println("PDF path: " + pdfPath);
-                    System.out.println("File exists: " + new java.io.File(pdfPath).exists());
-
-                    flashcardsController.generateFlashcards("PHL245", pdfPath);
-                } else {
-                    System.out.println("ERROR: flashcardsController is null!");
-                }
+        createFlashCardButton.addActionListener(e -> {
+            if (flashcardsController != null && courseId != null) {
+                // TODO: Replace hardcoded path with actual course PDF after file upload feature is merged
+                String pdfPath = "src/main/resources/test.pdf";
+                flashcardsController.generateFlashcards(courseId, pdfPath);
             }
         });
 

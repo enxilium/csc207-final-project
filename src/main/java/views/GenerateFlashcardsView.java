@@ -16,7 +16,7 @@ import java.beans.PropertyChangeListener;
 public class GenerateFlashcardsView extends JPanel implements PropertyChangeListener {
     private final String viewName = "generateFlashcards";
     private final FlashcardViewModel viewModel;
-    private GenerateFlashcardsController controller;  // ✅ 添加controller字段
+    private GenerateFlashcardsController controller;
 
     // UI Components
     private final JLabel titleLabel;

@@ -1,4 +1,4 @@
-package workspace;
+package usecases.workspace;
 
 import entities.Course;
 import org.junit.jupiter.api.Test;

@@ -1,4 +1,4 @@
-package file_managment;
+package usecases.file_managment;
 
 import entities.Course;
 import entities.PDFFile;

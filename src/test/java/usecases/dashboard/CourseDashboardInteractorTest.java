@@ -1,4 +1,4 @@
-package dashboard;
+package usecases.dashboard;
 
 import entities.Course;
 import org.junit.jupiter.api.Test;

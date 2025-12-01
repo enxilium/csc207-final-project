@@ -100,7 +100,7 @@ class CourseWorkspaceViewTest {
 
     @Test
     void testGetViewName() {
-        assertEquals("workspace", view.getViewName());
+        assertEquals("usecases/workspace", view.getViewName());
     }
 
     @Test

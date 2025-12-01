@@ -1,4 +1,4 @@
-package flashcards;
+package usecases.flashcards;
 
 import data_access.FlashcardGenerator;
 import entities.Flashcard;

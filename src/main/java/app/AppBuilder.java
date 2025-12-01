@@ -542,16 +542,14 @@ public class AppBuilder {
                     }
                 };
 
-        // Create the controller
-        GenerateFlashcardsController controller =
-                new GenerateFlashcardsController(interactor);
+            GenerateFlashcardsController controller =
+                    new GenerateFlashcardsController(interactor);
 
-        // Inject controller into the view
-        generateFlashcardsView.setController(controller);
-        courseWorkspaceView.setFlashcardsController(controller);
+            generateFlashcardsView.setController(controller);
+            courseWorkspaceView.setFlashcardsController(controller);
 
-        return this;
-    }
+            return this;
+        }
 
     // === TIMELINE: Timeline methods ===
 

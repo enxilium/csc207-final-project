@@ -1,10 +1,14 @@
+// src/test/java/interface_adapters/lecturenotes/GenerateLectureNotesPresenterTest.java
 package interface_adapters.lecturenotes;
 
 import interface_adapters.ViewManagerModel;
-import interface_adapters.lecturenotes.LectureNotesState;
 import org.junit.jupiter.api.Test;
+import usecases.lecturenotes.GenerateLectureNotesInputBoundary;
+import usecases.lecturenotes.GenerateLectureNotesInputData;
 import usecases.lecturenotes.GenerateLectureNotesOutputData;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
@@ -17,7 +21,6 @@ public class GenerateLectureNotesPresenterTest {
         ViewManagerModel viewManagerModel = new ViewManagerModel();
         LectureNotesViewModel viewModel = new LectureNotesViewModel();
 
-        // Put some dummy initial state to make sure it gets overwritten
         LectureNotesState initialState = viewModel.getState();
         initialState.setCourseId("OLD");
         initialState.setTopic("OLD");
@@ -30,23 +33,18 @@ public class GenerateLectureNotesPresenterTest {
                 new GenerateLectureNotesPresenter(viewModel, viewManagerModel);
 
         GenerateLectureNotesOutputData outputData =
-                new GenerateLectureNotesOutputData(
-                        "CSC207",
-                        "Recursion",
-                        "Generated notes for recursion"
-                );
+                new GenerateLectureNotesOutputData("CSC207", "Recursion", "Generated notes for recursion");
 
-        // Act: call the presenter
         presenter.prepareSuccessView(outputData);
 
-        // Assert: view manager switches to the lecture-notes view
         assertEquals(viewModel.getViewName(), viewManagerModel.getState());
         Object state = invokeNoArg(viewModel, "getState");
         assertNotNull(state);
 
         assertEquals("CSC207", readString(state, "getCourseId", "courseId"));
         assertEquals("Recursion", readString(state, "getTopic", "topic"));
-        assertEquals("Generated notes for recursion", readString(state, "getNotesText", "getContent", "notesText", "content"));
+        assertEquals("Generated notes for recursion",
+                readString(state, "getNotesText", "getContent", "notesText", "content"));
 
         Boolean loading = readNullableBoolean(state, "isLoading", "getLoading", "loading");
         if (loading != null) {
@@ -58,7 +56,6 @@ public class GenerateLectureNotesPresenterTest {
             assertTrue(error.isEmpty());
         }
 
-        // View should switch to lecture notes view after success (if your ViewManagerModel supports getState()).
         String expectedViewName = readStaticString(LectureNotesViewModel.class, "VIEW_NAME");
         String actualViewName = readNullableString(viewManagerModel, "getState", "state");
         if (expectedViewName != null && actualViewName != null) {
@@ -71,7 +68,6 @@ public class GenerateLectureNotesPresenterTest {
         ViewManagerModel viewManagerModel = new ViewManagerModel();
         LectureNotesViewModel viewModel = new LectureNotesViewModel();
 
-        // Record current view BEFORE calling fail view (no need to set it).
         String beforeView = readNullableString(viewManagerModel, "getState", "state");
 
         GenerateLectureNotesPresenter presenter =
@@ -91,11 +87,67 @@ public class GenerateLectureNotesPresenterTest {
             assertFalse(loading);
         }
 
-        // If ViewManagerModel has a readable state, assert it didn't change.
         String afterView = readNullableString(viewManagerModel, "getState", "state");
         if (beforeView != null && afterView != null) {
             assertEquals(beforeView, afterView);
         }
+    }
+
+    @Test
+    public void controller_execute_passesInputDataToInteractor() {
+        final boolean[] called = {false};
+
+        GenerateLectureNotesInputBoundary interactor = new GenerateLectureNotesInputBoundary() {
+            @Override
+            public void execute(GenerateLectureNotesInputData inputData) {
+                called[0] = true;
+                assertNotNull(inputData);
+                assertEquals("CSC207", inputData.getCourseId());
+                assertEquals("Recursion", inputData.getTopic());
+            }
+        };
+
+        GenerateLectureNotesController controller = new GenerateLectureNotesController(interactor);
+        controller.execute("CSC207", "Recursion");
+
+        assertTrue(called[0]);
+    }
+
+    @Test
+    public void viewModel_setState_firesPropertyChange_and_listener_canBeRemoved() {
+        LectureNotesViewModel vm = new LectureNotesViewModel();
+
+        // cover getViewName()
+        assertEquals("lecture_notes", vm.getViewName());
+
+        final int[] eventCount = {0};
+        PropertyChangeListener listener = new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if ("state".equals(evt.getPropertyName())) {
+                    eventCount[0]++;
+                }
+            }
+        };
+
+        vm.addPropertyChangeListener(listener);
+
+        LectureNotesState newState = new LectureNotesState();
+        newState.setCourseId("CSC207");
+        newState.setTopic("Recursion");
+        newState.setNotesText("hi");
+        vm.setState(newState);
+
+        assertEquals(1, eventCount[0]);
+
+        // cover firePropertyChange() explicitly
+        vm.firePropertyChange();
+        assertEquals(2, eventCount[0]);
+
+        // cover removePropertyChangeListener()
+        vm.removePropertyChangeListener(listener);
+        vm.firePropertyChange();
+        assertEquals(2, eventCount[0]); // no longer increments
     }
 
     // ---------- reflection helpers ----------
@@ -133,7 +185,6 @@ public class GenerateLectureNotesPresenterTest {
                     return (String) v;
                 }
             } catch (Exception ignored) {
-                // try next
             }
 
             try {
@@ -144,7 +195,6 @@ public class GenerateLectureNotesPresenterTest {
                     return (String) v;
                 }
             } catch (Exception ignored) {
-                // try next
             }
         }
         return null;
@@ -165,7 +215,6 @@ public class GenerateLectureNotesPresenterTest {
                     return (Boolean) v;
                 }
             } catch (Exception ignored) {
-                // try next
             }
 
             try {
@@ -176,7 +225,6 @@ public class GenerateLectureNotesPresenterTest {
                     return (Boolean) v;
                 }
             } catch (Exception ignored) {
-                // try next
             }
         }
         return null;
